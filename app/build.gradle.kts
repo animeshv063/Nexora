@@ -4,6 +4,7 @@ plugins {
 
     id("com.google.devtools.ksp")
     id("org.jetbrains.kotlin.plugin.serialization")
+    alias(libs.plugins.google.gms.google.services)
 }
 
 
@@ -68,6 +69,12 @@ dependencies {
 
     // Hilt
     implementation("com.google.dagger:hilt-android:2.56.2")
+    implementation(libs.firebase.auth)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.storage)
     ksp("com.google.dagger:hilt-compiler:2.56.2")
 
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
