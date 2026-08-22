@@ -68,8 +68,13 @@ class RepoImplementation @Inject constructor(
         trySend(ResultState.Loading)
         firebaseFirestore.collection(USER_COLLECTION).document(uid).get().addOnCompleteListener{
             if(it.isSuccessful){
-                val data = it.result.toObject(UserDataParent::class.java)!!
-                val userDataParent = UserDataParent(it.result.id, data)
+                val data = it.result.toObject(UserData::class.java)!!
+                val userDataParent = UserDataParent(it.result.id, userData = data)
+                trySend(ResultState.Success(userDataParent))
+            }else{
+                if(it.exception != null){
+                    trySend(ResultState.Error(it.exception?.localizedMessage.toString()))
+                }
             }
         }
     }

@@ -29,7 +29,8 @@ data class UserData (
 
 }
 
-data class UserDataParent(val nodeId : String = "",
-                          val userData : UserData = UserData()
+data class UserDataParent(
+    val nodeId : String = "",
+    val userData : UserData = UserData()
 )
 
