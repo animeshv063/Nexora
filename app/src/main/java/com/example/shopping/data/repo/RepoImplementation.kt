@@ -1,13 +1,17 @@
 package com.example.shopping.data.repo
 
+import android.net.Uri
 import com.example.shopping.common.ResultState
 import com.example.shopping.common.USER_COLLECTION
+import com.example.shopping.domain.models.CategoryDataModels
+import com.example.shopping.domain.models.ProductDataModels
 import com.example.shopping.domain.models.UserData
 import com.example.shopping.domain.models.UserDataParent
 import com.example.shopping.domain.repo.Repo
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.auth.User
+import com.google.firebase.storage.FirebaseStorage
 import jakarta.inject.Inject
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -77,7 +81,87 @@ class RepoImplementation @Inject constructor(
                 }
             }
         }
+        awaitClose{
+            close()
+        }
     }
 
+    override fun updateUserData(userDataParent: UserDataParent): Flow<ResultState<String>> = callbackFlow {
+        trySend(ResultState.Loading)
+        firebaseFirestore.collection(USER_COLLECTION).document(userDataParent.nodeId).update(userDataParent.userData.toMap()).addOnCompleteListener{
+            if(it.isSuccessful){
+                trySend(ResultState.Success("User Updated Successfully"))
+            }else{
+                if(it.exception != null){
+                    trySend(ResultState.Error(it.exception?.localizedMessage.toString()))
+                }
+            }
+        }
+        awaitClose{
+            close()
+        }
+    }
+
+    override fun userProfileImage(uri : Uri): Flow<ResultState<String>> = callbackFlow {
+        trySend(ResultState.Loading)
+        FirebaseStorage.getInstance().reference.child("userProfileImage/${System.currentTimeMillis()} + ${firebaseAuth.currentUser?.uid}")
+            .putFile(uri?: Uri.EMPTY).addOnCompleteListener{
+                it.result.storage.downloadUrl.addOnSuccessListener {imageUri ->
+                    trySend(ResultState.Success(imageUri.toString()))
+                }
+                if (it.exception != null) {
+                    trySend(ResultState.Error(it.exception?.localizedMessage.toString()))
+                }
+            }
+        awaitClose{
+            close()
+        }
+
+    }
+
+    override fun getCategoriesInLimited(): Flow<ResultState<List<CategoryDataModels>>> = callbackFlow {
+        trySend(ResultState.Loading)
+
+
+        firebaseFirestore.collection("categories").limit(7).get().addOnSuccessListener {querySnapshot ->
+            val categories = querySnapshot.documents.mapNotNull {
+                document ->
+                document.toObject(CategoryDataModels::class.java)
+            }
+            trySend(ResultState.Success(categories))
+        }.addOnFailureListener{exception ->
+            trySend(ResultState.Error(exception.toString()))
+        }
+        awaitClose{
+            close()
+        }
+
+    }
+    override fun getProductsInLimited(): Flow<ResultState<List<ProductDataModels>>> = callbackFlow {
+        trySend(ResultState.Loading)
+        firebaseFirestore.collection("Products").limit(10).get().addOnSuccessListener {
+            val products = it.documents.mapNotNull { document ->
+                document.toObject(ProductDataModels::class.java)?.apply {
+                    productId = document.id
+                }
+            }
+            trySend(ResultState.Success(products))
+        }.addOnFailureListener{
+            trySend(ResultState.Error(it.toString()))
+        }
+        awaitClose{
+            close()
+        }
+    }
+
+    override fun getAllProducts(): Flow<ResultState<List<ProductDataModels>>> = callbackFlow {
+        trySend(ResultState.Loading)
+        firebaseFirestore.collection("Products").get().addOnSuccessListener {
+            val products = it.documents.mapNotNull { document ->
+
+            }
+        }
+    }
 
 }
+
