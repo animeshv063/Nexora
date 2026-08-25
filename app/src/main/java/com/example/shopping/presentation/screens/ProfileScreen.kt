@@ -230,6 +230,7 @@ fun ProfileScreen(
     }
 
     // Delete Account Confirmation Dialog
+    val isGoogleUser = currentUser?.providerData?.any { it.providerId == "google.com" } == true
     var deleteConfirmPassword by remember { mutableStateOf("") }
     if (showDeleteAccountDialog) {
         AlertDialog(
@@ -243,17 +244,25 @@ fun ProfileScreen(
             text = {
                 Column {
                     Text(
-                        text = "This will permanently delete your profile, orders, and authentication records. This action cannot be undone.",
+                        text = if (isGoogleUser) {
+                            "Are you sure you want to delete your account? This will permanently erase your profile, shopping cart, and wishlist from this app and unlink your Google account."
+                        } else {
+                            "This will permanently delete your profile, orders, and authentication records. Please enter your password to confirm."
+                        },
                         color = TextMuted,
-                        fontSize = 14.sp
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp
                     )
-                    Spacer(modifier = Modifier.height(14.dp))
-                    CustomTextField(
-                        value = deleteConfirmPassword,
-                        onValueChange = { deleteConfirmPassword = it },
-                        label = "Enter Password to Confirm",
-                        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation()
-                    )
+
+                    if (!isGoogleUser) {
+                        Spacer(modifier = Modifier.height(14.dp))
+                        CustomTextField(
+                            value = deleteConfirmPassword,
+                            onValueChange = { deleteConfirmPassword = it },
+                            label = "Enter Password to Confirm",
+                            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation()
+                        )
+                    }
                 }
             },
             containerColor = DarkCard,
@@ -261,7 +270,7 @@ fun ProfileScreen(
                 Button(
                     onClick = {
                         currentUser?.uid?.let { uid ->
-                            viewModel.deleteAccount(uid, deleteConfirmPassword.trim())
+                            viewModel.deleteAccount(uid, if (isGoogleUser) "" else deleteConfirmPassword.trim())
                             showDeleteAccountDialog = false
                             deleteConfirmPassword = ""
                         }
@@ -281,6 +290,7 @@ fun ProfileScreen(
             }
         )
     }
+
 
 
     Column(

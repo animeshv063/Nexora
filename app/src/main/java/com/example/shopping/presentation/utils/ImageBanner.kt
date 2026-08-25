@@ -48,17 +48,25 @@ fun Banner(banners: List<BannerDataModels>) {
     )
 
 
-    val pagerState = rememberPagerState(pageCount = { displayBanners.size })
+    val pagerState = androidx.compose.foundation.pager.rememberPagerState(
+        initialPage = 0,
+        pageCount = { displayBanners.size }
+    )
 
-    LaunchedEffect(displayBanners.size) {
+    androidx.compose.runtime.LaunchedEffect(displayBanners) {
         if (displayBanners.size > 1) {
             while (true) {
-                delay(3500)
-                val nextPage = (pagerState.currentPage + 1) % displayBanners.size
-                pagerState.animateScrollToPage(nextPage, animationSpec = tween(600))
+                kotlinx.coroutines.delay(3500)
+                try {
+                    val nextPage = (pagerState.currentPage + 1) % displayBanners.size
+                    pagerState.animateScrollToPage(nextPage, animationSpec = tween(600))
+                } catch (e: Exception) {
+                    break
+                }
             }
         }
     }
+
 
     Column(
         modifier = Modifier

@@ -76,21 +76,30 @@ class RepoImplementation @Inject constructor(
 
     override fun getuserById(uid: String): Flow<ResultState<UserDataParent>> = callbackFlow {
         trySend(ResultState.Loading)
-        firebaseFirestore.collection(USER_COLLECTION).document(uid).get().addOnCompleteListener{
-            if(it.isSuccessful){
-                val data = it.result.toObject(UserData::class.java)!!
-                val userDataParent = UserDataParent(it.result.id, userData = data)
+        firebaseFirestore.collection(USER_COLLECTION).document(uid).get().addOnCompleteListener{ task ->
+            if (task.isSuccessful && task.result != null) {
+                val doc = task.result
+                val data = doc.toObject(UserData::class.java) ?: UserData(
+                    email = firebaseAuth.currentUser?.email ?: "",
+                    firstName = firebaseAuth.currentUser?.displayName?.split(" ")?.firstOrNull() ?: "",
+                    lastName = firebaseAuth.currentUser?.displayName?.split(" ")?.drop(1)?.joinToString(" ") ?: ""
+                )
+                val userDataParent = UserDataParent(doc.id, userData = data)
                 trySend(ResultState.Success(userDataParent))
-            }else{
-                if(it.exception != null){
-                    trySend(ResultState.Error(it.exception?.localizedMessage.toString()))
-                }
+            } else {
+                val fallbackData = UserData(
+                    email = firebaseAuth.currentUser?.email ?: "",
+                    firstName = firebaseAuth.currentUser?.displayName?.split(" ")?.firstOrNull() ?: "",
+                    lastName = firebaseAuth.currentUser?.displayName?.split(" ")?.drop(1)?.joinToString(" ") ?: ""
+                )
+                trySend(ResultState.Success(UserDataParent(nodeId = uid, userData = fallbackData)))
             }
         }
         awaitClose{
             close()
         }
     }
+
 
     override fun updateUserData(userDataParent: UserDataParent): Flow<ResultState<String>> = callbackFlow {
         trySend(ResultState.Loading)
@@ -137,15 +146,34 @@ class RepoImplementation @Inject constructor(
         trySend(ResultState.Loading)
 
 
-        firebaseFirestore.collection("categories").limit(7).get().addOnSuccessListener {querySnapshot ->
-            val categories = querySnapshot.documents.mapNotNull {
-                document ->
-                document.toObject(CategoryDataModels::class.java)
+        firebaseFirestore.collection("categories").limit(15).get().addOnSuccessListener {querySnapshot ->
+            val categories = querySnapshot.documents.mapNotNull { document ->
+                try {
+                    val name = document.getString("name") ?: ""
+                    val categoryImage = document.getString("categoryImage") ?: ""
+                    val createBy = document.getString("createBy") ?: ""
+                    val dateVal = document.get("date")
+                    val date = when (dateVal) {
+                        is Number -> dateVal.toLong()
+                        is String -> dateVal.toLongOrNull() ?: System.currentTimeMillis()
+                        else -> System.currentTimeMillis()
+                    }
+                    CategoryDataModels(
+                        name = name,
+                        categoryImage = categoryImage,
+                        createBy = createBy,
+                        date = date
+                    )
+                } catch (e: Exception) {
+                    null
+                }
             }
             trySend(ResultState.Success(categories))
         }.addOnFailureListener{exception ->
             trySend(ResultState.Error(exception.toString()))
         }
+
+
         awaitClose{
             close()
         }
@@ -324,15 +352,31 @@ class RepoImplementation @Inject constructor(
 
     override fun getAllCategories(): Flow<ResultState<List<CategoryDataModels>>> = callbackFlow {
         trySend(ResultState.Loading)
-        firebaseFirestore.collection("categories").get().addOnSuccessListener {
-            val categories = it.documents.mapNotNull { document ->
-                document.toObject(CategoryDataModels::class.java)
+        firebaseFirestore.collection("categories").get().addOnSuccessListener { querySnapshot ->
+            val categories = querySnapshot.documents.mapNotNull { document ->
+                try {
+                    val name = document.getString("name") ?: ""
+                    val categoryImage = document.getString("categoryImage") ?: ""
+                    val createBy = document.getString("createBy") ?: ""
+                    val dateVal = document.get("date")
+                    val date = when (dateVal) {
+                        is Number -> dateVal.toLong()
+                        is String -> dateVal.toLongOrNull() ?: System.currentTimeMillis()
+                        else -> System.currentTimeMillis()
+                    }
+                    CategoryDataModels(
+                        name = name,
+                        categoryImage = categoryImage,
+                        createBy = createBy,
+                        date = date
+                    )
+                } catch (e: Exception) {
+                    null
+                }
             }
             trySend(ResultState.Success(categories))
-
         }.addOnFailureListener {
             trySend(ResultState.Error(it.toString()))
-
         }
 
         awaitClose {
@@ -343,8 +387,8 @@ class RepoImplementation @Inject constructor(
     override fun getCheckout(productid: String): Flow<ResultState<ProductDataModels>> = callbackFlow {
         trySend(ResultState.Loading)
         firebaseFirestore.collection("Products").document(productid).get().addOnSuccessListener {
-            val product = it.toObject(ProductDataModels::class.java)
-            trySend(ResultState.Success(product!!))
+            val product = it.toObject(ProductDataModels::class.java) ?: ProductDataModels(productId = productid)
+            trySend(ResultState.Success(product))
         }.addOnFailureListener{
             trySend(ResultState.Error(it.toString()))
         }
@@ -355,9 +399,21 @@ class RepoImplementation @Inject constructor(
 
     override fun getBanner(): Flow<ResultState<List<BannerDataModels>>> = callbackFlow {
         trySend(ResultState.Loading)
-        firebaseFirestore.collection("banner").get().addOnSuccessListener {
-            val banner = it.documents.mapNotNull { document ->
-                document.toObject(BannerDataModels::class.java)
+        firebaseFirestore.collection("banner").get().addOnSuccessListener { querySnapshot ->
+            val banner = querySnapshot.documents.mapNotNull { document ->
+                try {
+                    val name = document.getString("name") ?: ""
+                    val image = document.getString("image") ?: ""
+                    val dateVal = document.get("date")
+                    val date = when (dateVal) {
+                        is Number -> dateVal.toLong()
+                        is String -> dateVal.toLongOrNull() ?: System.currentTimeMillis()
+                        else -> System.currentTimeMillis()
+                    }
+                    BannerDataModels(name = name, image = image, date = date)
+                } catch (e: Exception) {
+                    null
+                }
             }
             trySend(ResultState.Success(banner))
         }.addOnFailureListener{
@@ -367,6 +423,7 @@ class RepoImplementation @Inject constructor(
             close()
         }
     }
+
 
     override fun getSpecificCategoryItems(categoryName: String) : Flow<ResultState<List<ProductDataModels>>> = callbackFlow {
         trySend(ResultState.Loading)

@@ -31,6 +31,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -75,17 +76,21 @@ fun HomeScreen(
     var searchQuery by remember { mutableStateOf("") }
     var showNotificationDialog by remember { mutableStateOf(false) }
 
+    LaunchedEffect(Unit) {
+        viewModel.loadHomeData()
+    }
 
     val defaultCategories = listOf(
+        CategoryDataModels(name = "Shirts", categoryImage = ""),
         CategoryDataModels(name = "Trousers", categoryImage = ""),
         CategoryDataModels(name = "Shervani", categoryImage = ""),
-        CategoryDataModels(name = "Kids Wear", categoryImage = ""),
-        CategoryDataModels(name = "Shirts", categoryImage = ""),
-        CategoryDataModels(name = "Pajamas", categoryImage = "")
+        CategoryDataModels(name = "Pajamas", categoryImage = ""),
+        CategoryDataModels(name = "Kids Wear", categoryImage = "")
     )
 
     val categoriesList = if (!categoriesState.data.isNullOrEmpty()) categoriesState.data!!.filterNotNull() else defaultCategories
     val productsList = productsState.data ?: emptyList()
+
 
     Column(
         modifier = Modifier
