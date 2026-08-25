@@ -14,6 +14,6 @@ data class ProductDataModels(
     val image : String = "",
     val date : Long = System.currentTimeMillis(),
     val createBy : String = "",
-    val avaiableUnits : Int = 0,
+    val availableUnits : Int = 0,
     var productId : String = ""
 )

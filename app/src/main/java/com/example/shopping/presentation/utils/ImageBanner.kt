@@ -1,131 +1,144 @@
 package com.example.shopping.presentation.utils
 
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect as LaunchedEffect1
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.example.shopping.R
+
 import com.example.shopping.domain.models.BannerDataModels
-import com.google.accompanist.pager.rememberPagerState
+import com.example.shopping.ui.theme.DarkCard
+import com.example.shopping.ui.theme.DarkCardSecondary
+import com.example.shopping.ui.theme.OrangePrimary
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @Composable
-fun SelectedDot(modifier : Modifier){
-
-    Box(
-        modifier = modifier
-            .clip(shape = RoundedCornerShape(5.dp))
-            .padding(2.dp)
-            .height(10.dp)
-            .width(28.dp)
-            .background(colorResource(id = R.color.orange).copy(alpha = 0.8f),
-            shape = RoundedCornerShape(5.dp))
+fun Banner(banners: List<BannerDataModels>) {
+    val displayBanners = if (banners.isNotEmpty()) banners else listOf(
+        BannerDataModels(name = "Exclusive Premium Collection • Up to 50% OFF", image = ""),
+        BannerDataModels(name = "New Season Arrivals • Shop Now", image = ""),
+        BannerDataModels(name = "Festive Deals & Luxury Discounts", image = "")
     )
-}
-
-@Composable
-fun IndicatorDot(isSelected: Boolean , modifier : Modifier){
-
-    if(isSelected){
-        SelectedDot(modifier)
-    }else{
-        Box(
-            modifier = modifier
-                .padding(2.dp)
-                .clip(shape = CircleShape)
-                .size(8.dp)
-                .background(color = colorResource(id = R.color.orange).copy(alpha = 0.5f), CircleShape)
 
 
-        )
-    }
-}
+    val pagerState = rememberPagerState(pageCount = { displayBanners.size })
 
-@Composable
-fun PageIndicator(pageCount: Int, currentPage : Int, modifier : Modifier){
-
-    Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = modifier.padding(top = 3.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ){
-        repeat(pageCount){
-            IndicatorDot(isSelected = it == currentPage, modifier = modifier)
-        }
-    }
-
-}
-
-
-@Composable
-fun Banner(banners : List<BannerDataModels>){
-
-    val pagerState = rememberPagerState(pageCount = {banners.size})
-    val scope = rememberCoroutineScope()
-
-    LaunchedEffect1(Unit){
-        while (true){
-            delay(1500)
-            val nextPage = (pagerState.currentPage+1)% banners.size
-
-            scope.launch{
-                pagerState.animateScrollToPage(nextPage)
+    LaunchedEffect(displayBanners.size) {
+        if (displayBanners.size > 1) {
+            while (true) {
+                delay(3500)
+                val nextPage = (pagerState.currentPage + 1) % displayBanners.size
+                pagerState.animateScrollToPage(nextPage, animationSpec = tween(600))
             }
         }
-
     }
 
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
-
     ) {
-        Box(modifier = Modifier.wrapContentSize()){
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.wrapContentSize()
-            ){
-                currentPage -> Card(
-                    modifier = Modifier.height(170.dp)
-                        .padding(top = 8.dp, start = 15.dp, end = 15.dp),
-                    elevation = CardDefaults.elevatedCardElevation(8.dp)
-                ){
-                    AsyncImage(model = banners[currentPage].image,
-                        contentDescription = banners[currentPage].name,
-                        modifier = Modifier.fillMaxWidth(),
-                        contentScale = ContentScale.Crop,
-                        alignment = Alignment.Center
-                        )
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxWidth()
+        ) { page ->
+            val banner = displayBanners[page]
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(180.dp)
+                    .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                colors = CardDefaults.cardColors(containerColor = DarkCardSecondary)
+            ) {
+                if (banner.image.isNotEmpty()) {
+                    AsyncImage(
+                        model = banner.image,
+                        contentDescription = banner.name,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(DarkCard)
+                            .padding(24.dp),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        Column(verticalArrangement = Arrangement.Center) {
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = OrangePrimary
+                            ) {
+                                Text(
+                                    text = "SPECIAL OFFER",
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = banner.name,
+                                color = Color.White,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
             }
         }
-        PageIndicator(pageCount = banners.size, currentPage = pagerState.currentPage, modifier = Modifier)
 
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Dot / Pill Indicators matching screenshot
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            repeat(displayBanners.size) { index ->
+                val isSelected = pagerState.currentPage == index
+                Box(
+                    modifier = Modifier
+                        .height(6.dp)
+                        .width(if (isSelected) 24.dp else 6.dp)
+                        .clip(RoundedCornerShape(3.dp))
+                        .background(if (isSelected) OrangePrimary else DarkCardSecondary)
+                )
+            }
+        }
     }
-
 }

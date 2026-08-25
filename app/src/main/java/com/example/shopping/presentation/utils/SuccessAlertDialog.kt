@@ -22,12 +22,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.shopping.R
+import com.example.shopping.ui.theme.ButtonTextColor
+import com.example.shopping.ui.theme.DarkCard
+import com.example.shopping.ui.theme.DarkInputBorder
+import com.example.shopping.ui.theme.OrangePrimary
+import com.example.shopping.ui.theme.SuccessGreen
+import com.example.shopping.ui.theme.TextMuted
+import com.example.shopping.ui.theme.TextWhite
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,68 +42,84 @@ fun SuccessAlertDialog(
 ) {
     BasicAlertDialog(
         onDismissRequest = onDismissRequest,
-        modifier = Modifier.background(
-            shape = RoundedCornerShape(16.dp),
-            color = Color.White
-        ),
+        modifier = Modifier
+            .background(
+                shape = RoundedCornerShape(18.dp),
+                color = DarkCard
+            )
+            .padding(1.dp),
         content = {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(24.dp),
+                    .background(DarkCard, RoundedCornerShape(18.dp))
+                    .padding(28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Box(
                     modifier = Modifier
-                        .size(64.dp)
+                        .size(68.dp)
                         .background(
-                            color = colorResource(id = R.color.orange),
+                            color = SuccessGreen.copy(alpha = 0.15f),
                             shape = CircleShape
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = "Success",
-                        tint = Color.White,
-                        modifier = Modifier.size(36.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .background(
+                                color = SuccessGreen,
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "Success",
+                            tint = Color.White,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
                 Text(
-                    text = "SUCCESS",
-                    fontSize = 24.sp,
+                    text = "Congratulations!",
+                    fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
-                    color = colorResource(id = R.color.orange)
+                    color = TextWhite
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Operation completed successfully",
-                    fontSize = 16.sp,
+                    text = "Your account has been created successfully. Welcome to the app!",
+                    fontSize = 14.sp,
                     textAlign = TextAlign.Center,
-
+                    color = TextMuted,
+                    lineHeight = 20.sp
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(26.dp))
 
                 Button(
                     onClick = onClick,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(48.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = colorResource(id = R.color.orange)),
-                    shape = RoundedCornerShape(8.dp)
+                        .height(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        text = "Go to Home",
-                        color = Color.Gray
+                        text = "Continue to Home",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = ButtonTextColor
                     )
                 }
             }
         }
     )
-}
+}

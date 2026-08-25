@@ -14,7 +14,9 @@ import com.example.shopping.domain.models.UserData
 import com.example.shopping.domain.models.UserDataParent
 import com.example.shopping.domain.repo.Repo
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
+
 import com.google.firebase.storage.FirebaseStorage
 import jakarta.inject.Inject
 import kotlinx.coroutines.channels.awaitClose
@@ -92,36 +94,44 @@ class RepoImplementation @Inject constructor(
 
     override fun updateUserData(userDataParent: UserDataParent): Flow<ResultState<String>> = callbackFlow {
         trySend(ResultState.Loading)
-        firebaseFirestore.collection(USER_COLLECTION).document(userDataParent.nodeId).update(userDataParent.userData.toMap()).addOnCompleteListener{
-            if(it.isSuccessful){
-                trySend(ResultState.Success("User Updated Successfully"))
-            }else{
-                if(it.exception != null){
-                    trySend(ResultState.Error(it.exception?.localizedMessage.toString()))
+        firebaseFirestore.collection(USER_COLLECTION)
+            .document(userDataParent.nodeId)
+            .set(userDataParent.userData, com.google.firebase.firestore.SetOptions.merge())
+            .addOnCompleteListener {
+                if (it.isSuccessful) {
+                    trySend(ResultState.Success("User Updated Successfully"))
+                } else {
+                    if (it.exception != null) {
+                        trySend(ResultState.Error(it.exception?.localizedMessage.toString()))
+                    }
                 }
             }
-        }
-        awaitClose{
+        awaitClose {
             close()
         }
     }
 
-    override fun userProfileImage(uri : Uri): Flow<ResultState<String>> = callbackFlow {
+
+    override fun userProfileImage(uri: Uri): Flow<ResultState<String>> = callbackFlow {
         trySend(ResultState.Loading)
-        FirebaseStorage.getInstance().reference.child("userProfileImage/${System.currentTimeMillis()} + ${firebaseAuth.currentUser?.uid}")
-            .putFile(uri?: Uri.EMPTY).addOnCompleteListener{
-                it.result.storage.downloadUrl.addOnSuccessListener {imageUri ->
-                    trySend(ResultState.Success(imageUri.toString()))
-                }
-                if (it.exception != null) {
-                    trySend(ResultState.Error(it.exception?.localizedMessage.toString()))
-                }
+        val uid = firebaseAuth.currentUser?.uid ?: "user_${System.currentTimeMillis()}"
+        val storageRef = FirebaseStorage.getInstance().reference.child("userProfileImage/${uid}_${System.currentTimeMillis()}.jpg")
+        
+        storageRef.putFile(uri).addOnSuccessListener {
+            storageRef.downloadUrl.addOnSuccessListener { downloadUri ->
+                trySend(ResultState.Success(downloadUri.toString()))
+            }.addOnFailureListener { e ->
+                trySend(ResultState.Error(e.localizedMessage ?: "Failed to get download url"))
             }
-        awaitClose{
-            close()
+        }.addOnFailureListener { e ->
+            trySend(ResultState.Error(e.localizedMessage ?: "Failed to upload image"))
         }
 
+        awaitClose {
+            close()
+        }
     }
+
 
     override fun getCategoriesInLimited(): Flow<ResultState<List<CategoryDataModels>>> = callbackFlow {
         trySend(ResultState.Loading)
@@ -195,62 +205,122 @@ class RepoImplementation @Inject constructor(
 
     override fun addToCart(cartDataModels: CartDataModels): Flow<ResultState<String>> = callbackFlow {
         trySend(ResultState.Loading)
-        firebaseFirestore.collection(ADD_TO_CART).document(firebaseAuth.currentUser!!.uid).collection("User_Cart").add(cartDataModels).addOnSuccessListener {
-            trySend(ResultState.Success("Product Added to Cart"))
-        }.addOnFailureListener{
-            trySend(ResultState.Error(it.toString()))
+        val uid = firebaseAuth.currentUser?.uid
+        if (uid != null) {
+            firebaseFirestore.collection(ADD_TO_CART).document(uid).collection("User_Cart").add(cartDataModels).addOnSuccessListener {
+                trySend(ResultState.Success("Product Added to Cart"))
+            }.addOnFailureListener {
+                trySend(ResultState.Error(it.toString()))
+            }
+        } else {
+            trySend(ResultState.Error("Please log in to add items to cart"))
         }
 
-        awaitClose{
+        awaitClose {
+            close()
+        }
+    }
+
+    override fun removeFromCart(cartId: String): Flow<ResultState<String>> = callbackFlow {
+        trySend(ResultState.Loading)
+        val uid = firebaseAuth.currentUser?.uid
+        if (uid != null && cartId.isNotBlank()) {
+            firebaseFirestore.collection(ADD_TO_CART).document(uid).collection("User_Cart").document(cartId).delete().addOnSuccessListener {
+                trySend(ResultState.Success("Item removed from cart"))
+            }.addOnFailureListener {
+                trySend(ResultState.Error(it.toString()))
+            }
+        } else {
+            trySend(ResultState.Error("Failed to remove item"))
+        }
+        awaitClose {
             close()
         }
     }
 
     override fun addToFav(productDataModels: ProductDataModels): Flow<ResultState<String>> = callbackFlow {
         trySend(ResultState.Loading)
-        firebaseFirestore.collection(ADDTOFAV).document(firebaseAuth.currentUser!!.uid).collection("User_Fav")
-            .add(productDataModels).addOnSuccessListener {
-                trySend(ResultState.Success("Product Added To Fav"))
+        val uid = firebaseAuth.currentUser?.uid
+        if (uid != null) {
+            val docRef = if (productDataModels.productId.isNotBlank()) {
+                firebaseFirestore.collection(ADDTOFAV).document(uid).collection("User_Fav").document(productDataModels.productId)
+            } else {
+                firebaseFirestore.collection(ADDTOFAV).document(uid).collection("User_Fav").document()
+            }
+            docRef.set(productDataModels).addOnSuccessListener {
+                trySend(ResultState.Success("Added to Favorites"))
             }.addOnFailureListener {
                 trySend(ResultState.Error(it.toString()))
             }
-        awaitClose{
+        } else {
+            trySend(ResultState.Error("Please log in to favorite items"))
+        }
+        awaitClose {
             close()
         }
     }
 
-    override fun getAllFav(): Flow<ResultState<List<ProductDataModels>>> = callbackFlow {
+    override fun removeFromFav(productId: String): Flow<ResultState<String>> = callbackFlow {
         trySend(ResultState.Loading)
-        firebaseFirestore.collection(ADDTOFAV).document(firebaseAuth.currentUser!!.uid).collection("User_Fav").get().addOnSuccessListener {
-            val fav = it.documents.mapNotNull { document ->
-                document.toObject(ProductDataModels::class.java)
-                }
-                trySend(ResultState.Success(fav))
-            }.addOnFailureListener{
+        val uid = firebaseAuth.currentUser?.uid
+        if (uid != null && productId.isNotBlank()) {
+            firebaseFirestore.collection(ADDTOFAV).document(uid).collection("User_Fav").document(productId).delete().addOnSuccessListener {
+                trySend(ResultState.Success("Removed from Favorites"))
+            }.addOnFailureListener {
                 trySend(ResultState.Error(it.toString()))
+            }
+        } else {
+            trySend(ResultState.Error("Failed to remove favorite"))
         }
-
-        awaitClose{
+        awaitClose {
             close()
         }
+    }
 
+
+    override fun getAllFav(): Flow<ResultState<List<ProductDataModels>>> = callbackFlow {
+        trySend(ResultState.Loading)
+        val uid = firebaseAuth.currentUser?.uid
+        if (uid != null) {
+            firebaseFirestore.collection(ADDTOFAV).document(uid).collection("User_Fav").get().addOnSuccessListener {
+                val fav = it.documents.mapNotNull { document ->
+                    document.toObject(ProductDataModels::class.java)
+                }
+                trySend(ResultState.Success(fav))
+            }.addOnFailureListener {
+                trySend(ResultState.Success(emptyList()))
+            }
+        } else {
+            trySend(ResultState.Success(emptyList()))
+        }
+
+        awaitClose {
+            close()
+        }
     }
 
     override fun getCart(): Flow<ResultState<List<CartDataModels>>> = callbackFlow {
         trySend(ResultState.Loading)
-        firebaseFirestore.collection(ADD_TO_CART).document(firebaseAuth.currentUser!!.uid).collection("User_Cart").get().addOnSuccessListener {
-            val cart = it.documents.mapNotNull {
-                document -> document.toObject(CartDataModels::class.java)?.apply {
-                    cartId = document.id
+        val uid = firebaseAuth.currentUser?.uid
+        if (uid != null) {
+            firebaseFirestore.collection(ADD_TO_CART).document(uid).collection("User_Cart").get().addOnSuccessListener {
+                val cart = it.documents.mapNotNull { document ->
+                    document.toObject(CartDataModels::class.java)?.apply {
+                        cartId = document.id
+                    }
+                }
+                trySend(ResultState.Success(cart))
+            }.addOnFailureListener {
+                trySend(ResultState.Success(emptyList()))
             }
-            }
-
-            trySend(ResultState.Success(cart))
+        } else {
+            trySend(ResultState.Success(emptyList()))
         }
-        awaitClose{
+        awaitClose {
             close()
         }
     }
+
 
     override fun getAllCategories(): Flow<ResultState<List<CategoryDataModels>>> = callbackFlow {
         trySend(ResultState.Loading)
@@ -316,22 +386,124 @@ class RepoImplementation @Inject constructor(
         }
     }
 
-    override fun getAllSuggestedProducts(): Flow<ResultState<List<ProductDataModels>>> = callbackFlow {
+    override fun deleteUserAccount(uid: String, password: String): Flow<ResultState<String>> = callbackFlow {
         trySend(ResultState.Loading)
-        firebaseFirestore.collection(ADDTOFAV).document(firebaseAuth.currentUser!!.uid).collection("User_Fav").get().addOnSuccessListener {
-            val fav = it.documents.mapNotNull { document ->
+        val user = firebaseAuth.currentUser
 
-                document.toObject(ProductDataModels::class.java)
-
+        if (user != null) {
+            val performDelete = {
+                // Delete user's document in Firestore
+                firebaseFirestore.collection(USER_COLLECTION).document(uid).delete().addOnCompleteListener {
+                    // Delete user from Firebase Auth
+                    user.delete().addOnCompleteListener { authTask ->
+                        if (authTask.isSuccessful) {
+                            firebaseAuth.signOut()
+                            trySend(ResultState.Success("Account permanently deleted"))
+                        } else {
+                            val err = authTask.exception?.localizedMessage ?: "Failed to delete user"
+                            trySend(ResultState.Error(err))
+                        }
+                    }
+                }
             }
-            trySend(ResultState.Success(fav))
-        }.addOnFailureListener{
-            trySend(ResultState.Error(it.toString()))
+
+            if (password.isNotBlank() && user.email != null) {
+                // Reauthenticate with user's password first so Firebase allows deletion without errors
+                val credential = com.google.firebase.auth.EmailAuthProvider.getCredential(user.email!!, password)
+                user.reauthenticate(credential).addOnCompleteListener { reauthTask ->
+                    if (reauthTask.isSuccessful) {
+                        performDelete()
+                    } else {
+                        trySend(ResultState.Error(reauthTask.exception?.localizedMessage ?: "Invalid password for account deletion"))
+                    }
+                }
+            } else {
+                user.delete().addOnCompleteListener { authTask ->
+                    if (authTask.isSuccessful) {
+                        firebaseFirestore.collection(USER_COLLECTION).document(uid).delete()
+                        firebaseAuth.signOut()
+                        trySend(ResultState.Success("Account permanently deleted"))
+                    } else {
+                        val errorMsg = authTask.exception?.localizedMessage ?: ""
+                        if (errorMsg.contains("recent", ignoreCase = true)) {
+                            // If security token requires reauth, try to delete firestore first and prompt for password
+                            trySend(ResultState.Error("REAUTH_NEEDED"))
+                        } else {
+                            trySend(ResultState.Error(errorMsg))
+                        }
+                    }
+                }
+            }
+        } else {
+            trySend(ResultState.Error("No active user logged in"))
+        }
+
+        awaitClose {
+            close()
+        }
+    }
+
+
+
+
+    override fun loginWithGoogle(idToken: String): Flow<ResultState<String>> = callbackFlow {
+        trySend(ResultState.Loading)
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+        firebaseAuth.signInWithCredential(credential).addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val user = firebaseAuth.currentUser
+                if (user != null) {
+                    // Check or create Firestore entry
+                    val userRef = firebaseFirestore.collection(USER_COLLECTION).document(user.uid)
+                    userRef.get().addOnSuccessListener { doc ->
+                        if (!doc.exists()) {
+                            val names = (user.displayName ?: "User").split(" ")
+                            val firstName = names.firstOrNull() ?: "User"
+                            val lastName = if (names.size > 1) names.subList(1, names.size).joinToString(" ") else ""
+                            val newUserData = UserData(
+                                firstName = firstName,
+                                lastName = lastName,
+                                email = user.email ?: "",
+                                profileImage = user.photoUrl?.toString() ?: ""
+                            )
+                            userRef.set(newUserData)
+                        }
+                        trySend(ResultState.Success("Google Sign-In Successful"))
+                    }.addOnFailureListener {
+                        trySend(ResultState.Success("Google Sign-In Successful"))
+                    }
+                } else {
+                    trySend(ResultState.Success("Google Sign-In Successful"))
+                }
+            } else {
+                trySend(ResultState.Error(task.exception?.localizedMessage ?: "Google Sign-In Failed"))
+            }
         }
         awaitClose {
             close()
         }
     }
 
+    override fun getAllSuggestedProducts(): Flow<ResultState<List<ProductDataModels>>> = callbackFlow {
+
+        trySend(ResultState.Loading)
+        val uid = firebaseAuth.currentUser?.uid
+        if (uid != null) {
+            firebaseFirestore.collection(ADDTOFAV).document(uid).collection("User_Fav").get().addOnSuccessListener {
+                val fav = it.documents.mapNotNull { document ->
+                    document.toObject(ProductDataModels::class.java)
+                }
+                trySend(ResultState.Success(fav))
+            }.addOnFailureListener {
+                trySend(ResultState.Error(it.toString()))
+            }
+        } else {
+            trySend(ResultState.Success(emptyList()))
+        }
+        awaitClose {
+            close()
+        }
+    }
 }
+
 

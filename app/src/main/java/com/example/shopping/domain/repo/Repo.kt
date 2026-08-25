@@ -22,7 +22,9 @@ interface Repo {
     fun getAllProducts(): Flow<ResultState<List<ProductDataModels>>>
     fun getProductById(productId : String) : Flow<ResultState<ProductDataModels>>
     fun addToCart(cartDataModules : CartDataModels) : Flow<ResultState<String>>
+    fun removeFromCart(cartId: String) : Flow<ResultState<String>>
     fun addToFav(productDataModels : ProductDataModels): Flow<ResultState<String>>
+    fun removeFromFav(productId: String): Flow<ResultState<String>>
     fun getAllFav() : Flow<ResultState<List<ProductDataModels>>>
     fun getCart() : Flow<ResultState<List<CartDataModels>>>
     fun getAllCategories(): Flow<ResultState<List<CategoryDataModels>>>
@@ -30,7 +32,8 @@ interface Repo {
     fun getBanner() : Flow<ResultState<List<BannerDataModels>>>
     fun getSpecificCategoryItems(categoryName:String): Flow<ResultState<List<ProductDataModels>>>
     fun getAllSuggestedProducts():Flow<ResultState<List<ProductDataModels>>>
-
-
-
+    fun deleteUserAccount(uid: String, password: String = ""): Flow<ResultState<String>>
+    fun loginWithGoogle(idToken: String): Flow<ResultState<String>>
 }
+
+

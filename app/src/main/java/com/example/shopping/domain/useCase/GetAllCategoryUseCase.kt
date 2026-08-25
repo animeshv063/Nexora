@@ -7,7 +7,7 @@ import com.example.shopping.domain.repo.Repo
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.Flow
 
-class GetALlCategoryUseCase @Inject constructor(private val repo: Repo){
+class GetAllCategoryUseCase @Inject constructor(private val repo: Repo){
 
     fun getAllCategoriesUseCase(): Flow<ResultState<List<CategoryDataModels>>> {
 

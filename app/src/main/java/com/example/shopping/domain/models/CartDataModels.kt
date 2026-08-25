@@ -9,4 +9,6 @@ data class CartDataModels (
     var size : String = "",
     var description : String = "",
     var category : String = "",
+    var price : String = "",
+    var finalPrice : String = ""
 )
