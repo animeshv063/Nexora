@@ -95,7 +95,8 @@ fun CheckoutScreen(
         val activity = context as? Activity
         if (activity != null) {
             val checkout = Checkout()
-            checkout.setKeyID("rzp_test_1DP5mmOlF5G5ag") // Standard test key
+            val razorpayKey = context.getString(com.example.shopping.R.string.razorpay_key_id)
+            checkout.setKeyID(razorpayKey)
 
             try {
                 val options = JSONObject().apply {

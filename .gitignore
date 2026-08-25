@@ -13,4 +13,12 @@
 .externalNativeBuild
 .cxx
 local.properties
-//
+.kotlin
+
+# Firebase & Google Services secrets
+google-services.json
+app/google-services.json
+
+# Keystores & Signing credentials
+*.keystore
+*.jks

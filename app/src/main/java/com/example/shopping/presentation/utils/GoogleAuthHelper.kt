@@ -12,16 +12,25 @@ import java.util.UUID
 
 object GoogleAuthHelper {
 
-    // Web Client ID from Firebase OAuth configuration (Client Type 3)
-    private const val WEB_CLIENT_ID = "839246785201-7c0a6bdqgt44fobjp0jb0hiho814r611.apps.googleusercontent.com"
+    private fun getDefaultServerClientId(context: Context): String {
+        return try {
+            val resId = context.resources.getIdentifier("default_web_client_id", "string", context.packageName)
+            if (resId != 0) context.getString(resId) else ""
+        } catch (e: Exception) {
+            ""
+        }
+    }
 
     suspend fun initiateGoogleSignIn(
-
         context: Context,
-        serverClientId: String = WEB_CLIENT_ID,
+        serverClientId: String = getDefaultServerClientId(context),
         onSuccess: (idToken: String) -> Unit,
         onError: (String) -> Unit
     ) {
+        if (serverClientId.isBlank()) {
+            onError("Google Sign-In configuration missing. Please verify google-services.json is present.")
+            return
+        }
         val credentialManager = CredentialManager.create(context)
 
         val rawNonce = UUID.randomUUID().toString()
