@@ -72,7 +72,7 @@ fun ProductCardDark(
                         contentDescription = product.name,
                         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop,
+                        contentScale = ContentScale.Fit,
                         errorPlaceholderText = "${product.name.take(15)}..."
                     )
                 } else {

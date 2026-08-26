@@ -1,6 +1,9 @@
 package com.example.shopping.presentation.utils
 
+import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.Base64
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,10 +21,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
@@ -39,14 +44,15 @@ import java.nio.charset.StandardCharsets
 
 /**
  * Clean & normalize image URLs:
- * - Trims whitespace & surrounding quotes
- * - Converts Dropbox dl=0 to raw=1
- * - Converts Google Drive file links
- * - Decodes Google image redirect imgurl if present
  */
 fun sanitizeImageUrl(rawUrl: String): String {
     var url = rawUrl.trim()
     if (url.isEmpty()) return ""
+
+    // Preserve base64 data URIs
+    if (url.startsWith("data:image", ignoreCase = true)) {
+        return url
+    }
 
     url = url.removeSurrounding("\"", "\"")
         .removeSurrounding("'", "'")
@@ -72,7 +78,7 @@ fun sanitizeImageUrl(rawUrl: String): String {
     if (url.contains("drive.google.com/file/d/", ignoreCase = true)) {
         val fileId = url.substringAfter("file/d/").substringBefore("/").substringBefore("?")
         if (fileId.isNotBlank()) {
-            return "https://lh3.googleusercontent.com/d/$fileId"
+            return "https://lh3.googleusercontent.com/d/"
         }
     }
 
@@ -90,11 +96,8 @@ fun sanitizeImageUrl(rawUrl: String): String {
 }
 
 /**
- * 🖼️ High-Performance SmartAsyncImage:
- * - Direct image rendering via Coil
- * - Memory & Disk caching for instant loading
- * - Smooth loading spinner
- * - Informative fallback when an invalid link is entered
+ * High-Performance SmartAsyncImage:
+ * - Supports HTTP/HTTPS URLs, File URIs, and Base64 Data URIs (Cropped Bitmaps)
  */
 @Composable
 fun SmartAsyncImage(
@@ -107,6 +110,22 @@ fun SmartAsyncImage(
 ) {
     val context = LocalContext.current
     val cleanUrl = sanitizeImageUrl(imageUrl)
+
+    // Check if image is base64 data URI
+    val isBase64 = cleanUrl.startsWith("data:image", ignoreCase = true)
+    val decodedBitmap = remember(cleanUrl) {
+        if (isBase64) {
+            try {
+                val pureBase64 = if (cleanUrl.contains(",")) cleanUrl.substringAfter(",") else cleanUrl
+                val bytes = Base64.decode(pureBase64.trim(), Base64.DEFAULT)
+                BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+            } catch (e: Exception) {
+                null
+            }
+        } else {
+            null
+        }
+    }
 
     Surface(
         modifier = modifier.clip(shape),
@@ -123,6 +142,22 @@ fun SmartAsyncImage(
                     color = TextMuted,
                     fontSize = 12.sp
                 )
+            }
+        } else if (isBase64) {
+            if (decodedBitmap != null) {
+                Image(
+                    bitmap = decodedBitmap.asImageBitmap(),
+                    contentDescription = contentDescription,
+                    contentScale = contentScale,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                Box(
+                    modifier = Modifier.fillMaxSize().background(DarkCard).padding(8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = "Error decoding cropped image", color = TextMuted, fontSize = 10.sp)
+                }
             }
         } else {
             SubcomposeAsyncImage(

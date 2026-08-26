@@ -145,6 +145,9 @@ fun ProductDetailScreen(
     val rawPrice = if (product.finalPrice.isNotBlank() && product.finalPrice != "0") product.finalPrice else product.price
     val unitPrice = rawPrice.toDoubleOrNull() ?: 0.0
 
+    val statusBarsTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val safeTopBarPadding = if (statusBarsTop > 0.dp) statusBarsTop + 8.dp else 48.dp
+
     Box(modifier = Modifier.fillMaxSize().background(DarkBg)) {
         Column(
             modifier = Modifier
@@ -156,7 +159,7 @@ fun ProductDetailScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(310.dp)
+                    .height(340.dp)
                     .background(DarkCard)
             ) {
                 if (product.image.isNotEmpty()) {
@@ -165,7 +168,7 @@ fun ProductDetailScreen(
                         contentDescription = product.name,
                         shape = androidx.compose.ui.graphics.RectangleShape,
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop,
+                        contentScale = ContentScale.Fit,
                         errorPlaceholderText = "${product.name}\n(Unable to load image link)"
                     )
                 }
@@ -173,7 +176,7 @@ fun ProductDetailScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 40.dp),
+                        .padding(start = 16.dp, end = 16.dp, top = safeTopBarPadding, bottom = 12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {

@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -84,6 +85,11 @@ import com.example.shopping.domain.models.BannerDataModels
 import com.example.shopping.domain.models.CategoryDataModels
 import com.example.shopping.domain.models.ProductDataModels
 import com.example.shopping.presentation.utils.SmartAsyncImage
+import com.example.shopping.presentation.utils.ProductImageCropDialog
+import com.example.shopping.presentation.utils.CropAspectRatio
+import com.example.shopping.presentation.utils.ImageCropUtils
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import com.example.shopping.presentation.utils.sanitizeImageUrl
 import com.example.shopping.presentation.viewModels.ShoppingAppViewModel
 import com.example.shopping.ui.theme.DarkBg
@@ -178,6 +184,27 @@ fun AdminDashboardScreen(
     var newCatCreateBy by remember { mutableStateOf("Animesh") }
 
     var editingCategory by remember { mutableStateOf<CategoryDataModels?>(null) }
+
+    // ==========================================
+    // Crop & Precision Zoom States
+    // ==========================================
+    var cropTarget by remember { mutableStateOf<String?>(null) }
+    var cropImageUrl by remember { mutableStateOf("") }
+    var cropBitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
+    var cropDialogRatio by remember { mutableStateOf(CropAspectRatio.SQUARE_1_1) }
+    var cropDialogTitle by remember { mutableStateOf("Crop & Precision Zoom") }
+
+    val galleryCropLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: android.net.Uri? ->
+        if (uri != null) {
+            val bmp = ImageCropUtils.loadBitmap(context, uri)
+            if (bmp != null) {
+                cropBitmap = bmp
+                cropImageUrl = ""
+            }
+        }
+    }
     var editCatName by remember { mutableStateOf("") }
     var editCatImage by remember { mutableStateOf("") }
     var editCatCreateBy by remember { mutableStateOf("Animesh") }
@@ -612,12 +639,7 @@ fun AdminDashboardScreen(
                                             prodImage = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1000&q=80"
                                         }
                                     ) {
-                                        Text(
-                                            text = "💡 Shoes",
-                                            fontSize = 11.sp,
-                                            color = OrangePrimary,
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
-                                        )
+                                        Text(text = "?? Shoes", fontSize = 11.sp, color = OrangePrimary, modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp))
                                     }
                                     Surface(
                                         shape = RoundedCornerShape(6.dp),
@@ -627,12 +649,7 @@ fun AdminDashboardScreen(
                                             prodImage = "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=1000&q=80"
                                         }
                                     ) {
-                                        Text(
-                                            text = "💡 Shirt",
-                                            fontSize = 11.sp,
-                                            color = OrangePrimary,
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
-                                        )
+                                        Text(text = "?? Shirt", fontSize = 11.sp, color = OrangePrimary, modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp))
                                     }
                                     Surface(
                                         shape = RoundedCornerShape(6.dp),
@@ -642,12 +659,80 @@ fun AdminDashboardScreen(
                                             prodImage = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=1000&q=80"
                                         }
                                     ) {
-                                        Text(
-                                            text = "💡 Watch",
-                                            fontSize = 11.sp,
-                                            color = OrangePrimary,
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
-                                        )
+                                        Text(text = "? Watch", fontSize = 11.sp, color = OrangePrimary, modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp))
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                // Image Crop & Precision Zoom Action Card
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = DarkCardSecondary,
+                                    border = BorderStroke(1.dp, if (prodImage.isNotBlank()) OrangePrimary.copy(alpha = 0.6f) else DarkInputBorder),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Column(modifier = Modifier.padding(10.dp)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Icon(imageVector = Icons.Default.Edit, contentDescription = "Crop", tint = OrangePrimary, modifier = Modifier.size(16.dp))
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                Text(text = "Image Crop & Precision Zoom", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = TextWhite)
+                                            }
+                                            if (prodImage.isNotBlank()) {
+                                                Surface(
+                                                    shape = RoundedCornerShape(4.dp),
+                                                    color = OrangePrimary.copy(alpha = 0.2f)
+                                                ) {
+                                                    Text(text = "Link Ready", color = OrangePrimary, fontSize = 10.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp))
+                                                }
+                                            }
+                                        }
+
+                                        Spacer(modifier = Modifier.height(8.dp))
+
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Button(
+                                                onClick = {
+                                                    if (prodImage.isNotBlank()) {
+                                                        cropTarget = "add_product"
+                                                        cropImageUrl = prodImage
+                                                        cropBitmap = null
+                                                        cropDialogRatio = CropAspectRatio.SQUARE_1_1
+                                                        cropDialogTitle = "Crop & Precision Zoom - Product Image"
+                                                    } else {
+                                                        Toast.makeText(context, "Please paste an image URL or pick from gallery first", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                },
+                                                modifier = Modifier.weight(1f).height(38.dp),
+                                                shape = RoundedCornerShape(8.dp),
+                                                colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)
+                                            ) {
+                                                Text(text = "??? Adjust Crop & Zoom", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = com.example.shopping.ui.theme.ButtonTextColor)
+                                            }
+
+                                            OutlinedButton(
+                                                onClick = {
+                                                    cropTarget = "add_product"
+                                                    cropDialogRatio = CropAspectRatio.SQUARE_1_1
+                                                    cropDialogTitle = "Crop Product from Gallery"
+                                                    galleryCropLauncher.launch("image/*")
+                                                },
+                                                modifier = Modifier.weight(1f).height(38.dp),
+                                                shape = RoundedCornerShape(8.dp),
+                                                border = BorderStroke(1.dp, DarkInputBorder),
+                                                colors = ButtonDefaults.outlinedButtonColors(contentColor = TextWhite)
+                                            ) {
+                                                Text(text = "?? Pick & Crop", fontSize = 11.sp, color = TextWhite)
+                                            }
+                                        }
                                     }
                                 }
 
@@ -688,13 +773,13 @@ fun AdminDashboardScreen(
 
                         Spacer(modifier = Modifier.height(14.dp))
 
-                        // Live Portrait 3:4 Product Preview
-                        Text(text = "Live Portrait (3:4) Product Preview", fontWeight = FontWeight.SemiBold, color = TextWhite, fontSize = 13.sp)
+                        // Image Preview with exact aspect ratio
+                        Text(text = "Product Preview", fontWeight = FontWeight.SemiBold, color = TextWhite, fontSize = 13.sp)
                         Spacer(modifier = Modifier.height(6.dp))
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(180.dp)
+                                .height(240.dp)
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(DarkCardSecondary),
                             contentAlignment = Alignment.Center
@@ -705,7 +790,7 @@ fun AdminDashboardScreen(
                                     contentDescription = "Product Preview",
                                     shape = RoundedCornerShape(12.dp),
                                     modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
+                                    contentScale = ContentScale.Fit
                                 )
                             } else {
                                 Column(
@@ -982,6 +1067,53 @@ fun AdminDashboardScreen(
 
                                 KeyValRow(key = "categoryImage", value = newCatImage, placeholder = "Paste category image link https://...", onValueChange = { newCatImage = it })
 
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = DarkInputBg,
+                                    border = BorderStroke(1.dp, if (newCatImage.isNotBlank()) OrangePrimary.copy(alpha = 0.6f) else DarkInputBorder),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(8.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Button(
+                                            onClick = {
+                                                if (newCatImage.isNotBlank()) {
+                                                    cropTarget = "add_category"
+                                                    cropImageUrl = newCatImage
+                                                    cropBitmap = null
+                                                    cropDialogRatio = CropAspectRatio.SQUARE_1_1
+                                                    cropDialogTitle = "Crop Category Icon (1:1)"
+                                                } else {
+                                                    Toast.makeText(context, "Please paste an image URL or pick from gallery first", Toast.LENGTH_SHORT).show()
+                                                }
+                                            },
+                                            modifier = Modifier.weight(1f).height(36.dp),
+                                            shape = RoundedCornerShape(8.dp),
+                                            colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)
+                                        ) {
+                                            Text(text = "??? Adjust Crop & Zoom", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = com.example.shopping.ui.theme.ButtonTextColor)
+                                        }
+                                        OutlinedButton(
+                                            onClick = {
+                                                cropTarget = "add_category"
+                                                cropDialogRatio = CropAspectRatio.SQUARE_1_1
+                                                cropDialogTitle = "Pick & Crop Category Image"
+                                                galleryCropLauncher.launch("image/*")
+                                            },
+                                            modifier = Modifier.weight(1f).height(36.dp),
+                                            shape = RoundedCornerShape(8.dp),
+                                            border = BorderStroke(1.dp, DarkInputBorder),
+                                            colors = ButtonDefaults.outlinedButtonColors(contentColor = TextWhite)
+                                        ) {
+                                            Text(text = "?? Pick & Crop", fontSize = 11.sp, color = TextWhite)
+                                        }
+                                    }
+                                }
+
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -1180,6 +1312,53 @@ fun AdminDashboardScreen(
                                 HorizontalDivider(color = DarkInputBorder.copy(alpha = 0.5f), modifier = Modifier.padding(vertical = 8.dp))
 
                                 KeyValRow(key = "image", value = newBanImage, placeholder = "Paste banner image link https://...", onValueChange = { newBanImage = it })
+
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = DarkInputBg,
+                                    border = BorderStroke(1.dp, if (newBanImage.isNotBlank()) OrangePrimary.copy(alpha = 0.6f) else DarkInputBorder),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(8.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Button(
+                                            onClick = {
+                                                if (newBanImage.isNotBlank()) {
+                                                    cropTarget = "add_banner"
+                                                    cropImageUrl = newBanImage
+                                                    cropBitmap = null
+                                                    cropDialogRatio = CropAspectRatio.BANNER_16_9
+                                                    cropDialogTitle = "Crop Banner Image (16:9)"
+                                                } else {
+                                                    Toast.makeText(context, "Please paste a banner URL or pick from gallery first", Toast.LENGTH_SHORT).show()
+                                                }
+                                            },
+                                            modifier = Modifier.weight(1f).height(36.dp),
+                                            shape = RoundedCornerShape(8.dp),
+                                            colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)
+                                        ) {
+                                            Text(text = "??? Adjust Crop & Zoom (16:9)", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = com.example.shopping.ui.theme.ButtonTextColor)
+                                        }
+                                        OutlinedButton(
+                                            onClick = {
+                                                cropTarget = "add_banner"
+                                                cropDialogRatio = CropAspectRatio.BANNER_16_9
+                                                cropDialogTitle = "Pick & Crop Banner from Gallery"
+                                                galleryCropLauncher.launch("image/*")
+                                            },
+                                            modifier = Modifier.weight(1f).height(36.dp),
+                                            shape = RoundedCornerShape(8.dp),
+                                            border = BorderStroke(1.dp, DarkInputBorder),
+                                            colors = ButtonDefaults.outlinedButtonColors(contentColor = TextWhite)
+                                        ) {
+                                            Text(text = "?? Pick & Crop", fontSize = 11.sp, color = TextWhite)
+                                        }
+                                    }
+                                }
 
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Row(
@@ -1604,9 +1783,43 @@ fun AdminDashboardScreen(
                             shape = RoundedCornerShape(8.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(160.dp),
-                            contentScale = ContentScale.Crop
+                                .height(220.dp),
+                            contentScale = ContentScale.Fit
                         )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = {
+                                    cropTarget = "edit_product"
+                                    cropImageUrl = editImage
+                                    cropBitmap = null
+                                    cropDialogRatio = CropAspectRatio.SQUARE_1_1
+                                    cropDialogTitle = "Crop & Precision Zoom - Edit Product"
+                                },
+                                modifier = Modifier.weight(1f).height(36.dp),
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)
+                            ) {
+                                Text(text = "??? Adjust Crop & Zoom", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = com.example.shopping.ui.theme.ButtonTextColor)
+                            }
+                            OutlinedButton(
+                                onClick = {
+                                    cropTarget = "edit_product"
+                                    cropDialogRatio = CropAspectRatio.SQUARE_1_1
+                                    cropDialogTitle = "Pick & Crop Product Image"
+                                    galleryCropLauncher.launch("image/*")
+                                },
+                                modifier = Modifier.weight(1f).height(36.dp),
+                                shape = RoundedCornerShape(8.dp),
+                                border = BorderStroke(1.dp, DarkInputBorder),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = TextWhite)
+                            ) {
+                                Text(text = "?? Pick & Crop", fontSize = 11.sp, color = TextWhite)
+                            }
+                        }
                     }
 
                     OutlinedTextField(
@@ -1904,6 +2117,34 @@ fun AdminDashboardScreen(
             }
         )
     }
+
+    // Render Precision Crop Modal Dialog inside AdminDashboardScreen
+    if (cropTarget != null && (cropImageUrl.isNotBlank() || cropBitmap != null)) {
+        ProductImageCropDialog(
+            initialBitmap = cropBitmap,
+            imageUrl = cropImageUrl,
+            dialogTitle = cropDialogTitle,
+            initialRatio = cropDialogRatio,
+            onDismissRequest = {
+                cropTarget = null
+                cropBitmap = null
+                cropImageUrl = ""
+            },
+            onCropConfirmed = { _, base64Url ->
+                when (cropTarget) {
+                    "add_product" -> prodImage = base64Url
+                    "edit_product" -> editImage = base64Url
+                    "add_category" -> newCatImage = base64Url
+                    "edit_category" -> editCatImage = base64Url
+                    "add_banner" -> newBanImage = base64Url
+                }
+                cropTarget = null
+                cropBitmap = null
+                cropImageUrl = ""
+                Toast.makeText(context, "Framing & Crop Applied! ?", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
 }
 
 @Composable
@@ -1915,23 +2156,27 @@ fun KeyValRow(
     onValueChange: (String) -> Unit
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = key,
-            color = OrangePrimary,
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.width(110.dp)
+            color = TextWhite,
+            modifier = Modifier.width(100.dp)
         )
+
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            placeholder = { Text(placeholder, color = TextMuted, fontSize = 13.sp) },
-            keyboardOptions = if (isNumber) KeyboardOptions(keyboardType = KeyboardType.Number) else KeyboardOptions.Default,
+            placeholder = { Text(text = placeholder.ifEmpty { "Enter " }, color = TextMuted, fontSize = 12.sp) },
             singleLine = true,
-            modifier = Modifier.weight(1f),
+            keyboardOptions = if (isNumber) KeyboardOptions(keyboardType = KeyboardType.Number) else KeyboardOptions.Default,
+            modifier = Modifier.weight(1f).height(50.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = TextWhite,
                 unfocusedTextColor = TextWhite,
