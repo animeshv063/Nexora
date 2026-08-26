@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -78,13 +80,44 @@ fun ProductDetailScreen(
     val addToCartState by viewModel.addToCartState.collectAsState()
     val wishlistState by viewModel.wishlistState.collectAsState()
 
-    var selectedSize by remember { mutableStateOf("M") }
+    val product = productDetailState.data ?: ProductDataModels(
+        name = "Product",
+        price = "0",
+        finalPrice = "0",
+        category = "General",
+        description = "Product details and specifications will appear here.",
+        image = "",
+        productId = productId
+    )
+
+    val sizes = remember(product.category) {
+        val cat = product.category.trim().lowercase()
+        when {
+            cat.contains("kid") || cat.contains("child") -> listOf("XS", "S", "M")
+            cat.contains("footwear") || cat.contains("shoe") || cat.contains("sneaker") || cat.contains("boot") || cat.contains("sandal") || cat.contains("slipper") -> {
+                listOf("UK 6", "UK 7", "UK 8", "UK 9", "UK 10", "UK 11")
+            }
+            cat.contains("accessor") || cat.contains("belt") || cat.contains("wallet") || cat.contains("watch") || cat.contains("sunglass") || cat.contains("cap") || cat.contains("hat") || cat.contains("bag") -> {
+                listOf("Free Size")
+            }
+            else -> listOf("S", "M", "L", "XL", "XXL")
+        }
+    }
+
+    var selectedSize by remember { mutableStateOf(sizes.firstOrNull() ?: "M") }
+
+    LaunchedEffect(sizes) {
+        if (selectedSize !in sizes) {
+            selectedSize = sizes.firstOrNull() ?: "M"
+        }
+    }
+
     var sizeQuantities by remember { mutableStateOf(mapOf<String, Int>()) }
     val currentQuantity = sizeQuantities[selectedSize] ?: 0
     val activeSelections = sizeQuantities.filter { it.value > 0 }
     val totalSelectedUnits = activeSelections.values.sum()
 
-    val sizes = listOf("S", "M", "L", "XL", "XXL")
+    val isFavorite = wishlistState.data?.any { it?.productId == productId } ?: false
 
     LaunchedEffect(productId) {
         viewModel.fetchWishlist()
@@ -104,20 +137,8 @@ fun ProductDetailScreen(
         }
     }
 
-    val product = productDetailState.data ?: ProductDataModels(
-        name = "Product",
-        price = "0",
-        finalPrice = "0",
-        category = "General",
-        description = "Product details and specifications will appear here.",
-        image = "",
-        productId = productId
-    )
-
     val rawPrice = if (product.finalPrice.isNotBlank() && product.finalPrice != "0") product.finalPrice else product.price
     val unitPrice = rawPrice.toDoubleOrNull() ?: 0.0
-
-    val isFavorite = wishlistState.data?.any { it?.productId == productId } ?: false
 
     Box(modifier = Modifier.fillMaxSize().background(DarkBg)) {
         Column(
@@ -338,7 +359,7 @@ fun ProductDetailScreen(
 
                     // Size Selector
                     Text(
-                        text = "Select Size",
+                        text = if (sizes.size == 1 && sizes.first() == "Free Size") "Size" else "Select Size",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextWhite
@@ -346,11 +367,11 @@ fun ProductDetailScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    Row(
+                    LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        sizes.forEach { size ->
+                        items(sizes) { size ->
                             val isSelected = selectedSize == size
                             val sizeQty = sizeQuantities[size] ?: 0
                             Surface(
@@ -358,18 +379,21 @@ fun ProductDetailScreen(
                                 color = if (isSelected) OrangePrimary else DarkCardSecondary,
                                 border = if (sizeQty > 0 && !isSelected) BorderStroke(1.dp, OrangePrimary) else null,
                                 modifier = Modifier
-                                    .size(46.dp)
+                                    .height(44.dp)
                                     .clickable {
                                         selectedSize = size
                                     }
                             ) {
-                                Box(contentAlignment = Alignment.Center) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.padding(horizontal = if (size.length > 3) 14.dp else 12.dp)
+                                ) {
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                         Text(
                                             text = size,
                                             color = if (isSelected) ButtonTextColor else TextWhite,
                                             fontWeight = FontWeight.Bold,
-                                            fontSize = 14.sp
+                                            fontSize = if (size.length > 4) 12.sp else 13.sp
                                         )
                                         if (sizeQty > 0) {
                                             Text(

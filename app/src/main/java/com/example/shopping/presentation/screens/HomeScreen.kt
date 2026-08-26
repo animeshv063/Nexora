@@ -495,6 +495,7 @@ fun HomeScreen(
                     items(flashSaleProducts) { product ->
                         ProductCardDark(
                             product = product,
+                            modifier = Modifier.width(160.dp),
                             onProductClick = { onProductClick(product.productId) }
                         )
                     }
@@ -543,6 +544,7 @@ fun HomeScreen(
                     items(suggestedForYouProducts) { product ->
                         ProductCardDark(
                             product = product,
+                            modifier = Modifier.width(160.dp),
                             onProductClick = { onProductClick(product.productId) }
                         )
                     }

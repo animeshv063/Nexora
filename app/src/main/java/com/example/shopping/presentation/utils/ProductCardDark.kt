@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -29,7 +28,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -48,7 +46,7 @@ import com.example.shopping.ui.theme.TextWhite
 @Composable
 fun ProductCardDark(
     product: ProductDataModels,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.width(160.dp),
     onProductClick: () -> Unit,
     onRemoveFavorite: (() -> Unit)? = null
 ) {
@@ -56,17 +54,16 @@ fun ProductCardDark(
 
     Card(
         modifier = modifier
-            .fillMaxWidth()
             .clickable(onClick = onProductClick),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = DarkCardSecondary)
     ) {
         Column {
-            // Product Image Container
+            // Product Image Container (optimal 155dp height so square, landscape & portrait images all fit beautifully)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(170.dp)
+                    .height(155.dp)
                     .background(DarkCard)
             ) {
                 if (product.image.isNotEmpty()) {
@@ -197,7 +194,9 @@ fun ProductCardDark(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
                             text = "₹${product.finalPrice.ifEmpty { product.price }}",
                             fontSize = 14.sp,
@@ -206,7 +205,7 @@ fun ProductCardDark(
                         )
 
                         if (product.price.isNotEmpty() && product.price != product.finalPrice) {
-                            Spacer(modifier = Modifier.width(5.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "₹${product.price}",
                                 fontSize = 11.sp,
