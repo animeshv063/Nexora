@@ -6,6 +6,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -127,7 +132,7 @@ fun AdminDashboardScreen(
         "Jackets",
         "Footwear",
         "Kids Wear",
-        "Shervani",
+        "Sherwani",
         "Pajamas",
         "Accessories"
     )
@@ -195,13 +200,21 @@ fun AdminDashboardScreen(
         viewModel.fetchBanners()
     }
 
+    val statusBarsTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val navBarsBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val isThreeButton = navBarsBottom >= 30.dp
+    val safeTop: Dp = if (statusBarsTop > 0.dp) statusBarsTop + 8.dp else 44.dp
+    val safeBottom: Dp = if (isThreeButton) navBarsBottom + 16.dp else navBarsBottom + 8.dp
+
     if (!isAuthenticated) {
         // Secure Owner Login Gate
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(DarkBg)
-                .padding(24.dp),
+                .padding(top = safeTop, bottom = safeBottom)
+                .padding(horizontal = 24.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -347,6 +360,7 @@ fun AdminDashboardScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(DarkBg)
+                .padding(top = safeTop, bottom = safeBottom)
         ) {
             // Header
             Row(

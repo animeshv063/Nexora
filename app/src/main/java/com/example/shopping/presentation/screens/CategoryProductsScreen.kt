@@ -3,6 +3,11 @@ package com.example.shopping.presentation.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -67,10 +72,17 @@ fun CategoryProductsScreen(
     val filteredProducts = products.filter { it.name.contains(searchQuery, ignoreCase = true) }
 
 
+    val statusBarsTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val navBarsBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val isThreeButton = navBarsBottom >= 30.dp
+    val safeTop: Dp = if (statusBarsTop > 0.dp) statusBarsTop + 6.dp else 44.dp
+    val safeBottom: Dp = if (isThreeButton) navBarsBottom + 12.dp else navBarsBottom + 6.dp
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkBg)
+            .padding(top = safeTop, bottom = safeBottom)
     ) {
         // Header
         Row(

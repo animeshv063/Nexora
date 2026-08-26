@@ -3,6 +3,11 @@ package com.example.shopping.presentation.navigation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -201,13 +206,19 @@ fun MainContainer(
         BottomBarItem("Profile", Icons.Filled.Person)
     )
 
+    val navBarsBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val isThreeButtonNav = navBarsBottom >= 30.dp
+    val bottomNavElevation: Dp = if (isThreeButtonNav) navBarsBottom + 12.dp else navBarsBottom + 4.dp
+
     Scaffold(
+        contentWindowInsets = WindowInsets.statusBars,
         bottomBar = {
             Surface(
                 color = DarkBg,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(68.dp)
+                    .padding(bottom = bottomNavElevation)
+                    .height(64.dp)
             ) {
                 Row(
                     modifier = Modifier

@@ -6,6 +6,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -591,6 +596,10 @@ fun ProductDetailScreen(
 
         val isOutOfStock = product.availableUnits <= 0
 
+        val navBarsBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+        val isThreeButton = navBarsBottom >= 30.dp
+        val bottomActionPadding: Dp = if (isThreeButton) navBarsBottom + 12.dp else 14.dp
+
         Surface(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -601,7 +610,7 @@ fun ProductDetailScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = bottomActionPadding),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 OutlinedButton(
