@@ -1,7 +1,11 @@
 package com.example.shopping.presentation.screens
 
+import android.widget.Toast
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,8 +25,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -42,6 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -73,6 +83,7 @@ fun HomeScreen(
     val categoriesState by viewModel.categoriesState.collectAsState()
     val productsState by viewModel.productsState.collectAsState()
 
+    val context = LocalContext.current
     var searchQuery by remember { mutableStateOf("") }
     var showNotificationDialog by remember { mutableStateOf(false) }
 
@@ -80,16 +91,30 @@ fun HomeScreen(
         viewModel.loadHomeData()
     }
 
-    val defaultCategories = listOf(
-        CategoryDataModels(name = "Shirts", categoryImage = ""),
-        CategoryDataModels(name = "Trousers", categoryImage = ""),
-        CategoryDataModels(name = "Shervani", categoryImage = ""),
-        CategoryDataModels(name = "Pajamas", categoryImage = ""),
-        CategoryDataModels(name = "Kids Wear", categoryImage = "")
-    )
-
-    val categoriesList = if (!categoriesState.data.isNullOrEmpty()) categoriesState.data!!.filterNotNull() else defaultCategories
+    val categoriesList = categoriesState.data?.filterNotNull() ?: emptyList()
     val productsList = productsState.data ?: emptyList()
+
+    // ⚡ Random Flash Sale Offers on Firebase Products (Max 5 products with ₹200 to ₹700 off)
+    val flashSaleProducts = remember(productsList) {
+        if (productsList.isEmpty()) emptyList()
+        else {
+            val possibleDiscounts = listOf(200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700)
+            productsList.shuffled().take(5).map { product ->
+                val basePrice = product.price.toDoubleOrNull() ?: 1499.0
+                val discount = possibleDiscounts.random()
+                val discountedPrice = maxOf(99.0, basePrice - discount).toInt().toString()
+                product.copy(
+                    finalPrice = discountedPrice
+                )
+            }
+        }
+    }
+
+    // 🌟 Randomize "Suggested For You" separately (Max 5 products with fresh selection each time)
+    val suggestedForYouProducts = remember(productsList) {
+        if (productsList.isEmpty()) emptyList()
+        else productsList.shuffled().take(5)
+    }
 
 
     Column(
@@ -98,11 +123,44 @@ fun HomeScreen(
             .background(DarkBg)
             .verticalScroll(rememberScrollState())
     ) {
+        // Nexora Brand Header
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                painter = painterResource(id = com.example.shopping.R.drawable.app_logo),
+                contentDescription = "Nexora Logo",
+                modifier = Modifier
+                    .size(38.dp)
+                    .clip(CircleShape)
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Column {
+                Text(
+                    text = "NEXORA",
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 18.sp,
+                    color = TextWhite,
+                    letterSpacing = 1.sp
+                )
+                Text(
+                    text = "SHOP MORE. LIVE BETTER.",
+                    fontSize = 9.sp,
+                    color = OrangePrimary,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.5.sp
+                )
+            }
+        }
+
         // Search & Notification Bar
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
+                .padding(horizontal = 16.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             OutlinedTextField(
@@ -111,9 +169,16 @@ fun HomeScreen(
                 modifier = Modifier
                     .weight(1f)
                     .height(52.dp),
-                placeholder = { Text("Search", color = TextMuted, fontSize = 14.sp) },
+                placeholder = { Text("Search products", color = TextMuted, fontSize = 14.sp) },
                 leadingIcon = {
                     Icon(imageVector = Icons.Default.Search, contentDescription = "Search", tint = TextMuted)
+                },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear", tint = TextMuted)
+                        }
+                    }
                 },
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -209,145 +274,300 @@ fun HomeScreen(
         }
 
 
-        // Categories Header
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(text = "Categories", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = TextWhite)
-            Text(
-                text = "See more",
-                fontSize = 13.sp,
-                color = OrangePrimary,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.clickable { onSeeAllCategoriesClick() }
-            )
-        }
 
-        // Categories Circular Row
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            items(categoriesList) { category ->
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.clickable { onCategoryClick(category.name) }
-                ) {
-                    Surface(
-                        modifier = Modifier.size(68.dp),
-                        shape = CircleShape,
-                        color = DarkCardSecondary
-                    ) {
-                        if (category.categoryImage.isNotEmpty()) {
-                            AsyncImage(
-                                model = category.categoryImage,
-                                contentDescription = category.name,
-                                modifier = Modifier.fillMaxSize().clip(CircleShape),
-                                contentScale = ContentScale.Crop
-                            )
-                        } else {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
+
+        if (searchQuery.isNotBlank()) {
+            val query = searchQuery.trim()
+            val matchingProducts = productsList.filter { product ->
+                product.name.contains(query, ignoreCase = true) ||
+                product.category.contains(query, ignoreCase = true) ||
+                product.description.contains(query, ignoreCase = true)
+            }
+            val matchingCategories = categoriesList.filter { cat ->
+                cat.name.contains(query, ignoreCase = true)
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                // Category recommendation chips
+                if (matchingCategories.isNotEmpty()) {
+                    Text(
+                        text = "Suggested Categories",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = OrangePrimary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(matchingCategories) { category ->
+                            Surface(
+                                shape = RoundedCornerShape(20.dp),
+                                color = DarkCardSecondary,
+                                border = BorderStroke(1.dp, OrangePrimary.copy(alpha = 0.5f)),
+                                modifier = Modifier.clickable { onCategoryClick(category.name) }
                             ) {
                                 Text(
-                                    text = category.name.take(1).uppercase(),
-                                    color = OrangePrimary,
-                                    fontSize = 24.sp,
-                                    fontWeight = FontWeight.Bold
+                                    text = "📁 ${category.name}",
+                                    color = TextWhite,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
                                 )
                             }
                         }
                     }
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
-                        text = category.name,
-                        fontSize = 12.sp,
-                        color = TextWhite,
-                        fontWeight = FontWeight.Medium
+                        text = "Matching Products (${matchingProducts.size})",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = TextWhite
                     )
                 }
-            }
-        }
 
-        // Auto-Sliding Promo Banner
-        Banner(banners = bannerState.data ?: emptyList())
+                Spacer(modifier = Modifier.height(12.dp))
 
-        // Flash Sale Section Header
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(text = "Flash Sale", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = TextWhite)
-            Text(
-                text = "See more",
-                fontSize = 13.sp,
-                color = OrangePrimary,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.clickable { onSeeAllProductsClick() }
-            )
-        }
-
-        // Flash Sale Horizontal List
-        if (productsList.isNotEmpty()) {
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                items(productsList) { product ->
-                    ProductCardDark(
-                        product = product,
-                        onProductClick = { onProductClick(product.productId) }
-                    )
+                if (matchingProducts.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 40.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = null,
+                                tint = TextMuted,
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "No items matching \"$searchQuery\"",
+                                color = TextWhite,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 15.sp
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Only products present in your Firebase catalog are shown.",
+                                color = TextMuted,
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
+                } else {
+                    val chunked = matchingProducts.chunked(2)
+                    chunked.forEach { rowItems ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            rowItems.forEach { product ->
+                                Box(modifier = Modifier.weight(1f)) {
+                                    ProductCardDark(
+                                        product = product,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        onProductClick = { onProductClick(product.productId) }
+                                    )
+                                }
+                            }
+                            if (rowItems.size == 1) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
                 }
             }
         } else {
-            Box(
-                modifier = Modifier.fillMaxWidth().height(100.dp),
-                contentAlignment = Alignment.Center
+            // Normal Home Layout
+            // Categories Header
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                CircularProgressIndicator(color = OrangePrimary, modifier = Modifier.size(28.dp))
+                Text(text = "Categories", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = TextWhite)
+                Text(
+                    text = "See more",
+                    fontSize = 13.sp,
+                    color = OrangePrimary,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.clickable { onSeeAllCategoriesClick() }
+                )
             }
-        }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            // Categories Circular Row
+            if (categoriesList.isEmpty()) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .height(60.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    color = DarkCardSecondary
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text("Nothing to display", color = TextMuted, fontSize = 13.sp)
+                    }
+                }
+            } else {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(categoriesList) { category ->
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.clickable { onCategoryClick(category.name) }
+                        ) {
+                            Surface(
+                                modifier = Modifier.size(68.dp),
+                                shape = CircleShape,
+                                color = DarkCardSecondary
+                            ) {
+                                if (category.categoryImage.isNotEmpty()) {
+                                    com.example.shopping.presentation.utils.SmartAsyncImage(
+                                        imageUrl = category.categoryImage,
+                                        contentDescription = category.name,
+                                        shape = CircleShape,
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = category.name.take(1).uppercase(),
+                                            color = OrangePrimary,
+                                            fontSize = 24.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = category.name,
+                                fontSize = 12.sp,
+                                color = TextWhite,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                }
+            }
 
-        // Suggested For You Section Header
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(text = "Suggested For You", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = TextWhite)
-            Text(
-                text = "See more",
-                fontSize = 13.sp,
-                color = OrangePrimary,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.clickable { onSeeAllProductsClick() }
-            )
-        }
+            // Auto-Sliding Promo Banner
+            Banner(banners = bannerState.data ?: emptyList())
 
-        // Suggested For You Horizontal List
-        if (productsList.isNotEmpty()) {
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(14.dp)
+            // Flash Sale Section Header
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                items(productsList.reversed()) { product ->
-                    ProductCardDark(
-                        product = product,
-                        onProductClick = { onProductClick(product.productId) }
-                    )
+                Text(text = "Flash Sale", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = TextWhite)
+                Text(
+                    text = "See more",
+                    fontSize = 13.sp,
+                    color = OrangePrimary,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.clickable { onSeeAllProductsClick() }
+                )
+            }
+
+            // Flash Sale Horizontal List (Random Products with ₹200 to ₹700 dynamic discounts)
+            if (flashSaleProducts.isNotEmpty()) {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    items(flashSaleProducts) { product ->
+                        ProductCardDark(
+                            product = product,
+                            onProductClick = { onProductClick(product.productId) }
+                        )
+                    }
+                }
+            } else {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .height(60.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    color = DarkCardSecondary
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text("Nothing to display", color = TextMuted, fontSize = 13.sp)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Suggested For You Section Header
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = "Suggested For You", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = TextWhite)
+                Text(
+                    text = "See more",
+                    fontSize = 13.sp,
+                    color = OrangePrimary,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.clickable { onSeeAllProductsClick() }
+                )
+            }
+
+            // Suggested For You Horizontal List (Distinctly randomized collection)
+            if (suggestedForYouProducts.isNotEmpty()) {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    items(suggestedForYouProducts) { product ->
+                        ProductCardDark(
+                            product = product,
+                            onProductClick = { onProductClick(product.productId) }
+                        )
+                    }
+                }
+            } else {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .height(60.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    color = DarkCardSecondary
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text("Nothing to display", color = TextMuted, fontSize = 13.sp)
+                    }
                 }
             }
         }

@@ -41,11 +41,30 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun Banner(banners: List<BannerDataModels>) {
-    val displayBanners = if (banners.isNotEmpty()) banners else listOf(
-        BannerDataModels(name = "Exclusive Premium Collection • Up to 50% OFF", image = ""),
-        BannerDataModels(name = "New Season Arrivals • Shop Now", image = ""),
-        BannerDataModels(name = "Festive Deals & Luxury Discounts", image = "")
-    )
+    if (banners.isEmpty()) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(140.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            shape = RoundedCornerShape(16.dp),
+            color = DarkCardSecondary
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Nothing to display",
+                    color = com.example.shopping.ui.theme.TextMuted,
+                    fontSize = 14.sp
+                )
+            }
+        }
+        return
+    }
+
+    val displayBanners = banners
 
 
     val pagerState = androidx.compose.foundation.pager.rememberPagerState(
@@ -89,11 +108,13 @@ fun Banner(banners: List<BannerDataModels>) {
                 colors = CardDefaults.cardColors(containerColor = DarkCardSecondary)
             ) {
                 if (banner.image.isNotEmpty()) {
-                    AsyncImage(
-                        model = banner.image,
+                    SmartAsyncImage(
+                        imageUrl = banner.image,
                         contentDescription = banner.name,
+                        shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.Crop,
+                        errorPlaceholderText = "${banner.name.ifEmpty { "Banner" }}\n(Unable to load image link)"
                     )
                 } else {
                     Box(

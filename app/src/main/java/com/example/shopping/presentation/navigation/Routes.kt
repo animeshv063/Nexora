@@ -35,7 +35,7 @@ sealed class Routes{
     object CartScreen
 
     @Serializable
-    data class CheckoutScreen(val productId : String)
+    data class CheckoutScreen(val productId : String, val quantity: Int = 1, val size: String = "M")
 
     @Serializable
     object PayScreen
@@ -52,5 +52,6 @@ sealed class Routes{
     @Serializable
     data class EachCategoryItemsScreens(val categoryName : String)
 
-
+    @Serializable
+    object AdminDashboardScreen
 }

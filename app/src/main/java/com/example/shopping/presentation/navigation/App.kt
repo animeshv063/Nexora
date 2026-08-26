@@ -44,6 +44,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.example.shopping.presentation.LoginScreen
 import com.example.shopping.presentation.SignUpScreen
+import com.example.shopping.presentation.screens.AdminDashboardScreen
 import com.example.shopping.presentation.screens.AllCategoryScreen
 import com.example.shopping.presentation.screens.CartScreen
 import com.example.shopping.presentation.screens.CategoryProductsScreen
@@ -147,7 +148,9 @@ fun App() {
                 viewModel = viewModel,
                 onBackClick = { navController.popBackStack() },
                 onNavigateToCart = { navController.navigate(Routes.CartScreen) },
-                onBuyNowClick = { pId -> navController.navigate(Routes.CheckoutScreen(productId = pId)) }
+                onBuyNowClick = { pId, qty, size ->
+                    navController.navigate(Routes.CheckoutScreen(productId = pId, quantity = qty, size = size))
+                }
             )
         }
 
@@ -155,6 +158,8 @@ fun App() {
             val route = backStackEntry.toRoute<Routes.CheckoutScreen>()
             CheckoutScreen(
                 productId = route.productId,
+                quantity = route.quantity,
+                size = route.size,
                 viewModel = viewModel,
                 onBackClick = { navController.popBackStack() },
                 onOrderSuccess = {
@@ -170,6 +175,13 @@ fun App() {
                 viewModel = viewModel,
                 onBackClick = { navController.popBackStack() },
                 onCheckoutClick = { pId -> navController.navigate(Routes.CheckoutScreen(productId = pId)) }
+            )
+        }
+
+        composable<Routes.AdminDashboardScreen> {
+            AdminDashboardScreen(
+                viewModel = viewModel,
+                onBackClick = { navController.popBackStack() }
             )
         }
     }
@@ -283,6 +295,9 @@ fun MainContainer(
                         mainAppNavController.navigate(SubNavigation.LoginSignUpScreen) {
                             popUpTo(SubNavigation.MainHomeScreen) { inclusive = true }
                         }
+                    },
+                    onAdminClick = {
+                        mainAppNavController.navigate(Routes.AdminDashboardScreen)
                     }
                 )
             }

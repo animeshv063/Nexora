@@ -204,7 +204,7 @@ fun ProductCard(
                         )
                         Spacer(modifier = Modifier.width(2.dp))
                         Text(
-                            text = "4.5",
+                            text = RatingHelper.getRatingForProduct(product.productId),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF92400E)

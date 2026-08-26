@@ -122,14 +122,22 @@ fun SignUpScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        Image(
+            painter = painterResource(id = R.drawable.app_logo),
+            contentDescription = "Nexora Logo",
+            modifier = Modifier
+                .size(90.dp)
+                .padding(bottom = 10.dp)
+        )
+
         Text(
-            text = "SignUp",
-            fontSize = 28.sp,
+            text = "Create Nexora Account",
+            fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
             color = TextWhite,
             modifier = Modifier
                 .align(Alignment.Start)
-                .padding(bottom = 20.dp)
+                .padding(bottom = 16.dp)
         )
 
         Row(

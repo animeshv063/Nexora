@@ -34,6 +34,21 @@ interface Repo {
     fun getAllSuggestedProducts():Flow<ResultState<List<ProductDataModels>>>
     fun deleteUserAccount(uid: String, password: String = ""): Flow<ResultState<String>>
     fun loginWithGoogle(idToken: String): Flow<ResultState<String>>
+    fun placeOrder(productId: String, quantity: Int, address: String, paymentMethod: String): Flow<ResultState<String>>
+    fun cancelOrder(orderId: String, productId: String, quantity: Int): Flow<ResultState<String>>
+    fun getUserOrders(): Flow<ResultState<List<com.example.shopping.domain.models.OrderDataModel>>>
+    fun resetUserOrders(): Flow<ResultState<String>>
+    fun addProduct(product: ProductDataModels): Flow<ResultState<String>>
+    fun updateProduct(product: ProductDataModels): Flow<ResultState<String>>
+    fun deleteProduct(productId: String): Flow<ResultState<String>>
+
+    fun addCategory(category: CategoryDataModels): Flow<ResultState<String>>
+    fun updateCategory(categoryId: String, category: CategoryDataModels): Flow<ResultState<String>>
+    fun deleteCategory(categoryId: String): Flow<ResultState<String>>
+
+    fun addBanner(banner: BannerDataModels): Flow<ResultState<String>>
+    fun updateBanner(bannerId: String, banner: BannerDataModels): Flow<ResultState<String>>
+    fun deleteBanner(bannerId: String): Flow<ResultState<String>>
 }
 
 

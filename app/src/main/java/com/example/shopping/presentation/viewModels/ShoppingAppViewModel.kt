@@ -65,7 +65,20 @@ class ShoppingAppViewModel @Inject constructor(
     private val getSpecificCategoryItemsUseCase: GetSpecificCategoryitems,
     private val getAllSuggestedProductsUseCase: GetAllSuggestedProductsUseCase,
     private val removeFromCartUseCase: com.example.shopping.domain.useCase.RemoveFromCartUseCase,
-    private val removeFromFavUseCase: com.example.shopping.domain.useCase.RemoveFromFavUseCase
+    private val removeFromFavUseCase: com.example.shopping.domain.useCase.RemoveFromFavUseCase,
+    private val placeOrderUseCase: com.example.shopping.domain.useCase.PlaceOrderUseCase,
+    private val cancelOrderUseCase: com.example.shopping.domain.useCase.CancelOrderUseCase,
+    private val getUserOrdersUseCase: com.example.shopping.domain.useCase.GetUserOrdersUseCase,
+    private val resetUserOrdersUseCase: com.example.shopping.domain.useCase.ResetUserOrdersUseCase,
+    private val addProductUseCase: com.example.shopping.domain.useCase.AddProductUseCase,
+    private val updateProductUseCase: com.example.shopping.domain.useCase.UpdateProductUseCase,
+    private val deleteProductUseCase: com.example.shopping.domain.useCase.DeleteProductUseCase,
+    private val addCategoryUseCase: com.example.shopping.domain.useCase.AddCategoryUseCase,
+    private val updateCategoryUseCase: com.example.shopping.domain.useCase.UpdateCategoryUseCase,
+    private val deleteCategoryUseCase: com.example.shopping.domain.useCase.DeleteCategoryUseCase,
+    private val addBannerUseCase: com.example.shopping.domain.useCase.AddBannerUseCase,
+    private val updateBannerUseCase: com.example.shopping.domain.useCase.UpdateBannerUseCase,
+    private val deleteBannerUseCase: com.example.shopping.domain.useCase.DeleteBannerUseCase
 ) : ViewModel() {
 
 
@@ -248,15 +261,48 @@ class ShoppingAppViewModel @Inject constructor(
     }
 
     fun toggleFavorite(product: ProductDataModels) {
-        viewModelScope.launch {
-            addtoFavUseCase.addtoFav(product).collectLatest { result ->
-                when (result) {
-                    is ResultState.Loading -> _addToFavState.value = ResponseState(isLoading = true)
-                    is ResultState.Success -> {
-                        _addToFavState.value = ResponseState(data = result.data)
-                        fetchWishlist()
+        val currentFavs = _wishlistState.value.data?.toMutableList() ?: mutableListOf()
+        val isAlreadyFav = currentFavs.any { it.productId == product.productId }
+
+        if (isAlreadyFav) {
+            // Optimistically untick favorite instantly
+            _wishlistState.value = ResponseState(data = currentFavs.filter { it.productId != product.productId })
+            viewModelScope.launch {
+                removeFromFavUseCase.removeFromFav(product.productId).collectLatest { result ->
+                    when (result) {
+                        is ResultState.Success -> {
+                            _addToFavState.value = ResponseState(data = "Removed from Favorites")
+                            fetchWishlist()
+                            loadHomeData()
+                            fetchProductById(product.productId)
+                        }
+                        is ResultState.Error -> {
+                            _addToFavState.value = ResponseState(errorMessage = result.message)
+                            fetchWishlist()
+                        }
+                        else -> {}
                     }
-                    is ResultState.Error -> _addToFavState.value = ResponseState(errorMessage = result.message)
+                }
+            }
+        } else {
+            // Optimistically tick favorite instantly
+            val updated = currentFavs + product
+            _wishlistState.value = ResponseState(data = updated)
+            viewModelScope.launch {
+                addtoFavUseCase.addtoFav(product).collectLatest { result ->
+                    when (result) {
+                        is ResultState.Success -> {
+                            _addToFavState.value = ResponseState(data = result.data)
+                            fetchWishlist()
+                            loadHomeData()
+                            fetchProductById(product.productId)
+                        }
+                        is ResultState.Error -> {
+                            _addToFavState.value = ResponseState(errorMessage = result.message)
+                            fetchWishlist()
+                        }
+                        else -> {}
+                    }
                 }
             }
         }
@@ -381,6 +427,265 @@ class ShoppingAppViewModel @Inject constructor(
 
     fun resetAddToFavState() {
         _addToFavState.value = ResponseState()
+    }
+
+    private val _placeOrderState = MutableStateFlow(ResponseState<String>())
+    val placeOrderState = _placeOrderState.asStateFlow()
+
+    fun placeOrder(
+        productId: String,
+        quantity: Int,
+        address: String,
+        paymentMethod: String,
+        onSuccess: () -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            placeOrderUseCase.placeOrder(productId, quantity, address, paymentMethod).collectLatest { result ->
+                when (result) {
+                    is ResultState.Loading -> _placeOrderState.value = ResponseState(isLoading = true)
+                    is ResultState.Success -> {
+                        _placeOrderState.value = ResponseState(data = result.data)
+                        loadHomeData()
+                        fetchProductById(productId)
+                        onSuccess()
+                    }
+                    is ResultState.Error -> _placeOrderState.value = ResponseState(errorMessage = result.message)
+                }
+            }
+        }
+    }
+
+    private val _userOrdersState = MutableStateFlow(ResponseState<List<com.example.shopping.domain.models.OrderDataModel>>())
+    val userOrdersState = _userOrdersState.asStateFlow()
+
+    private val _cancelOrderState = MutableStateFlow(ResponseState<String>())
+    val cancelOrderState = _cancelOrderState.asStateFlow()
+
+    fun fetchUserOrders() {
+        viewModelScope.launch {
+            getUserOrdersUseCase.getUserOrders().collectLatest { result ->
+                when (result) {
+                    is ResultState.Loading -> _userOrdersState.value = ResponseState(isLoading = true)
+                    is ResultState.Success -> _userOrdersState.value = ResponseState(data = result.data)
+                    is ResultState.Error -> _userOrdersState.value = ResponseState(errorMessage = result.message)
+                }
+            }
+        }
+    }
+
+    fun cancelOrder(orderId: String, productId: String, quantity: Int, onSuccess: () -> Unit = {}) {
+        viewModelScope.launch {
+            cancelOrderUseCase.cancelOrder(orderId, productId, quantity).collectLatest { result ->
+                when (result) {
+                    is ResultState.Loading -> _cancelOrderState.value = ResponseState(isLoading = true)
+                    is ResultState.Success -> {
+                        _cancelOrderState.value = ResponseState(data = result.data)
+                        fetchUserOrders()
+                        loadHomeData()
+                        if (productId.isNotBlank()) fetchProductById(productId)
+                        onSuccess()
+                    }
+                    is ResultState.Error -> _cancelOrderState.value = ResponseState(errorMessage = result.message)
+                }
+            }
+        }
+    }
+
+    fun resetOrderHistory(onSuccess: () -> Unit = {}) {
+        viewModelScope.launch {
+            resetUserOrdersUseCase.resetUserOrders().collectLatest { result ->
+                if (result is ResultState.Success) {
+                    fetchUserOrders()
+                    onSuccess()
+                }
+            }
+        }
+    }
+
+    private val _adminActionState = MutableStateFlow(ResponseState<String>())
+    val adminActionState = _adminActionState.asStateFlow()
+
+    fun addProduct(product: ProductDataModels, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
+        viewModelScope.launch {
+            addProductUseCase.addProduct(product).collectLatest { result ->
+                when (result) {
+                    is ResultState.Loading -> _adminActionState.value = ResponseState(isLoading = true)
+                    is ResultState.Success -> {
+                        _adminActionState.value = ResponseState(data = result.data)
+                        loadHomeData()
+                        fetchProducts()
+                        onSuccess()
+                    }
+                    is ResultState.Error -> {
+                        _adminActionState.value = ResponseState(errorMessage = result.message)
+                        onError(result.message)
+                    }
+                }
+            }
+        }
+    }
+
+    fun updateProduct(product: ProductDataModels, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
+        viewModelScope.launch {
+            updateProductUseCase.updateProduct(product).collectLatest { result ->
+                when (result) {
+                    is ResultState.Loading -> _adminActionState.value = ResponseState(isLoading = true)
+                    is ResultState.Success -> {
+                        _adminActionState.value = ResponseState(data = result.data)
+                        loadHomeData()
+                        fetchProducts()
+                        if (product.productId.isNotBlank()) fetchProductById(product.productId)
+                        onSuccess()
+                    }
+                    is ResultState.Error -> {
+                        _adminActionState.value = ResponseState(errorMessage = result.message)
+                        onError(result.message)
+                    }
+                }
+            }
+        }
+    }
+
+    fun deleteProduct(productId: String, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
+        viewModelScope.launch {
+            deleteProductUseCase.deleteProduct(productId).collectLatest { result ->
+                when (result) {
+                    is ResultState.Loading -> _adminActionState.value = ResponseState(isLoading = true)
+                    is ResultState.Success -> {
+                        _adminActionState.value = ResponseState(data = result.data)
+                        loadHomeData()
+                        fetchProducts()
+                        onSuccess()
+                    }
+                    is ResultState.Error -> {
+                        _adminActionState.value = ResponseState(errorMessage = result.message)
+                        onError(result.message)
+                    }
+                }
+            }
+        }
+    }
+
+    // Category Management
+    fun addCategory(category: CategoryDataModels, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
+        viewModelScope.launch {
+            addCategoryUseCase.addCategory(category).collectLatest { result ->
+                when (result) {
+                    is ResultState.Loading -> _adminActionState.value = ResponseState(isLoading = true)
+                    is ResultState.Success -> {
+                        _adminActionState.value = ResponseState(data = result.data)
+                        loadHomeData()
+                        fetchCategories()
+                        onSuccess()
+                    }
+                    is ResultState.Error -> {
+                        _adminActionState.value = ResponseState(errorMessage = result.message)
+                        onError(result.message)
+                    }
+                }
+            }
+        }
+    }
+
+    fun updateCategory(categoryId: String, category: CategoryDataModels, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
+        viewModelScope.launch {
+            updateCategoryUseCase.updateCategory(categoryId, category).collectLatest { result ->
+                when (result) {
+                    is ResultState.Loading -> _adminActionState.value = ResponseState(isLoading = true)
+                    is ResultState.Success -> {
+                        _adminActionState.value = ResponseState(data = result.data)
+                        loadHomeData()
+                        fetchCategories()
+                        onSuccess()
+                    }
+                    is ResultState.Error -> {
+                        _adminActionState.value = ResponseState(errorMessage = result.message)
+                        onError(result.message)
+                    }
+                }
+            }
+        }
+    }
+
+    fun deleteCategory(categoryId: String, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
+        viewModelScope.launch {
+            deleteCategoryUseCase.deleteCategory(categoryId).collectLatest { result ->
+                when (result) {
+                    is ResultState.Loading -> _adminActionState.value = ResponseState(isLoading = true)
+                    is ResultState.Success -> {
+                        _adminActionState.value = ResponseState(data = result.data)
+                        loadHomeData()
+                        fetchCategories()
+                        onSuccess()
+                    }
+                    is ResultState.Error -> {
+                        _adminActionState.value = ResponseState(errorMessage = result.message)
+                        onError(result.message)
+                    }
+                }
+            }
+        }
+    }
+
+    // Banner Management
+    fun addBanner(banner: BannerDataModels, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
+        viewModelScope.launch {
+            addBannerUseCase.addBanner(banner).collectLatest { result ->
+                when (result) {
+                    is ResultState.Loading -> _adminActionState.value = ResponseState(isLoading = true)
+                    is ResultState.Success -> {
+                        _adminActionState.value = ResponseState(data = result.data)
+                        loadHomeData()
+                        fetchBanners()
+                        onSuccess()
+                    }
+                    is ResultState.Error -> {
+                        _adminActionState.value = ResponseState(errorMessage = result.message)
+                        onError(result.message)
+                    }
+                }
+            }
+        }
+    }
+
+    fun updateBanner(bannerId: String, banner: BannerDataModels, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
+        viewModelScope.launch {
+            updateBannerUseCase.updateBanner(bannerId, banner).collectLatest { result ->
+                when (result) {
+                    is ResultState.Loading -> _adminActionState.value = ResponseState(isLoading = true)
+                    is ResultState.Success -> {
+                        _adminActionState.value = ResponseState(data = result.data)
+                        loadHomeData()
+                        fetchBanners()
+                        onSuccess()
+                    }
+                    is ResultState.Error -> {
+                        _adminActionState.value = ResponseState(errorMessage = result.message)
+                        onError(result.message)
+                    }
+                }
+            }
+        }
+    }
+
+    fun deleteBanner(bannerId: String, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
+        viewModelScope.launch {
+            deleteBannerUseCase.deleteBanner(bannerId).collectLatest { result ->
+                when (result) {
+                    is ResultState.Loading -> _adminActionState.value = ResponseState(isLoading = true)
+                    is ResultState.Success -> {
+                        _adminActionState.value = ResponseState(data = result.data)
+                        loadHomeData()
+                        fetchBanners()
+                        onSuccess()
+                    }
+                    is ResultState.Error -> {
+                        _adminActionState.value = ResponseState(errorMessage = result.message)
+                        onError(result.message)
+                    }
+                }
+            }
+        }
     }
 }
 

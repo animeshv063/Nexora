@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.shopping.domain.models.CartDataModels
 import com.example.shopping.presentation.viewModels.ShoppingAppViewModel
+import com.example.shopping.ui.theme.ButtonTextColor
 import com.example.shopping.ui.theme.DarkBg
 import com.example.shopping.ui.theme.DarkCard
 import com.example.shopping.ui.theme.DarkCardSecondary
@@ -258,7 +259,7 @@ fun CartScreen(
                             shape = RoundedCornerShape(10.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)
                         ) {
-                            Text(text = "Proceed to Checkout", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TextWhite)
+                            Text(text = "Proceed to Checkout", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = ButtonTextColor)
                         }
                     }
                 }

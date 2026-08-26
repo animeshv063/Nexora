@@ -53,21 +53,7 @@ fun AllCategoryScreen(
 ) {
     val categoriesState by viewModel.categoriesState.collectAsState()
 
-    val defaultCategories = listOf(
-        CategoryDataModels(name = "Trousers", categoryImage = ""),
-        CategoryDataModels(name = "Shervani", categoryImage = ""),
-        CategoryDataModels(name = "Kids Wear", categoryImage = ""),
-        CategoryDataModels(name = "Shirts", categoryImage = ""),
-        CategoryDataModels(name = "Pajamas", categoryImage = ""),
-        CategoryDataModels(name = "Girl's Shirt", categoryImage = ""),
-        CategoryDataModels(name = "Suits", categoryImage = ""),
-        CategoryDataModels(name = "Socks", categoryImage = ""),
-        CategoryDataModels(name = "Summer Shirts", categoryImage = ""),
-        CategoryDataModels(name = "Shorts", categoryImage = ""),
-        CategoryDataModels(name = "Lehengas", categoryImage = "")
-    )
-
-    val categoriesList = if (!categoriesState.data.isNullOrEmpty()) categoriesState.data!!.filterNotNull() else defaultCategories
+    val categoriesList = categoriesState.data?.filterNotNull() ?: emptyList()
 
     Column(
         modifier = Modifier
@@ -87,56 +73,72 @@ fun AllCategoryScreen(
             Text(text = "All Categories", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TextWhite)
         }
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            contentPadding = PaddingValues(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-            modifier = Modifier.fillMaxSize()
-        ) {
-            items(categoriesList) { category ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onCategoryClick(category.name) },
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = DarkCardSecondary)
-                ) {
-                    Column {
-                        if (category.categoryImage.isNotEmpty()) {
-                            AsyncImage(
-                                model = category.categoryImage,
-                                contentDescription = category.name,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(130.dp)
-                                    .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
-                                contentScale = ContentScale.Crop
-                            )
-                        } else {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(130.dp)
-                                    .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                                    .background(DarkCard),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = category.name.take(1).uppercase(),
-                                    color = PrimaryAccent,
-                                    fontSize = 36.sp,
-                                    fontWeight = FontWeight.Bold
+        if (categoriesList.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Nothing to display",
+                    color = com.example.shopping.ui.theme.TextMuted,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        } else {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                contentPadding = PaddingValues(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                items(categoriesList) { category ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onCategoryClick(category.name) },
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = DarkCardSecondary)
+                    ) {
+                        Column {
+                            if (category.categoryImage.isNotEmpty()) {
+                                com.example.shopping.presentation.utils.SmartAsyncImage(
+                                    imageUrl = category.categoryImage,
+                                    contentDescription = category.name,
+                                    shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(130.dp),
+                                    contentScale = ContentScale.Crop
                                 )
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(130.dp)
+                                        .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                                        .background(DarkCard),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = category.name.take(1).uppercase(),
+                                        color = PrimaryAccent,
+                                        fontSize = 36.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
+                            Text(
+                                text = category.name,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextWhite,
+                                modifier = Modifier.padding(12.dp)
+                            )
                         }
-                        Text(
-                            text = category.name,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextWhite,
-                            modifier = Modifier.padding(12.dp)
-                        )
                     }
                 }
             }

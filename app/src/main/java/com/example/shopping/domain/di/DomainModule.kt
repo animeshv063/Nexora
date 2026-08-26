@@ -16,8 +16,11 @@ object DomainModule {
 
     @Singleton
     @Provides
-    fun provideRepo(firebaseAuth: FirebaseAuth, firebaseFirestore: FirebaseFirestore): Repo {
-        return RepoImplementation(firebaseAuth, firebaseFirestore)
+    fun provideRepo(
+        firebaseAuth: FirebaseAuth,
+        firebaseFirestore: FirebaseFirestore,
+        @dagger.hilt.android.qualifiers.ApplicationContext context: android.content.Context
+    ): Repo {
+        return RepoImplementation(firebaseAuth, firebaseFirestore, context)
     }
-
 }

@@ -22,11 +22,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -80,7 +82,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 @Composable
 fun ProfileScreen(
     viewModel: ShoppingAppViewModel,
-    onLogOutSuccess: () -> Unit
+    onLogOutSuccess: () -> Unit,
+    onAdminClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -89,10 +92,15 @@ fun ProfileScreen(
     val userProfileState by viewModel.userProfileState.collectAsState()
     val profileUpdateState by viewModel.profileUpdateState.collectAsState()
     val deleteAccountState by viewModel.deleteAccountState.collectAsState()
+    val userOrdersState by viewModel.userOrdersState.collectAsState()
 
     var isEditing by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
+    var showOrdersDialog by remember { mutableStateOf(false) }
+    var showResetOrdersConfirm by remember { mutableStateOf(false) }
+
+    var selectedBitmapForCrop by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
 
     // Form fields
     var firstName by remember { mutableStateOf("") }
@@ -103,29 +111,63 @@ fun ProfileScreen(
 
     LaunchedEffect(currentUser?.uid) {
         currentUser?.uid?.let { uid ->
-            val localSaved = ProfilePhotoStorage.getLocalProfileAvatar(context, uid)
-            if (localSaved != null) {
-                profileImage = localSaved
+            if (ProfilePhotoStorage.isPhotoRemoved(context, uid)) {
+                profileImage = ""
+            } else {
+                val localSaved = ProfilePhotoStorage.getLocalProfileAvatar(context, uid)
+                if (localSaved != null) {
+                    profileImage = localSaved
+                }
             }
             viewModel.fetchUserProfile(uid)
+            viewModel.fetchUserOrders()
         }
     }
 
     LaunchedEffect(userProfileState.data) {
+        val uid = currentUser?.uid
+        val isRemoved = uid != null && ProfilePhotoStorage.isPhotoRemoved(context, uid)
+
         val user = userProfileState.data?.userData
         if (user != null) {
             firstName = user.firstName
             lastName = user.lastName
             phone = user.phoneNumber
             address = user.address
-            val localSaved = currentUser?.uid?.let { ProfilePhotoStorage.getLocalProfileAvatar(context, it) }
-            profileImage = localSaved ?: user.profileImage
+
+            if (isRemoved || user.profileImage.isEmpty()) {
+                profileImage = ""
+            } else {
+                val localSaved = uid?.let { ProfilePhotoStorage.getLocalProfileAvatar(context, it) }
+                if (localSaved != null) {
+                    profileImage = localSaved
+                } else if (user.profileImage.isNotEmpty()) {
+                    if (user.profileImage.startsWith("data:image") || user.profileImage.length > 200) {
+                        coroutineScope.launch {
+                            val bmp = ImageCropUtils.base64ToBitmap(user.profileImage)
+                            if (bmp != null && currentUser != null) {
+                                val saved = withContext(Dispatchers.IO) {
+                                    ProfilePhotoStorage.saveCircularBitmapLocally(context, currentUser.uid, bmp)
+                                }
+                                if (saved != null) profileImage = saved
+                            }
+                        }
+                    } else {
+                        profileImage = user.profileImage
+                    }
+                }
+            }
         } else if (currentUser != null) {
             val names = (currentUser.displayName ?: "").split(" ")
             firstName = names.firstOrNull() ?: ""
             lastName = if (names.size > 1) names.subList(1, names.size).joinToString(" ") else ""
-            val localSaved = ProfilePhotoStorage.getLocalProfileAvatar(context, currentUser.uid)
-            profileImage = localSaved ?: (currentUser.photoUrl?.toString() ?: "")
+
+            if (isRemoved) {
+                profileImage = ""
+            } else {
+                val localSaved = ProfilePhotoStorage.getLocalProfileAvatar(context, currentUser.uid)
+                profileImage = localSaved ?: ""
+            }
         }
     }
 
@@ -151,13 +193,14 @@ fun ProfileScreen(
             viewModel.resetDeleteAccountState()
             onLogOutSuccess()
         }
-        deleteAccountState.errorMessage?.let {
-            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+        deleteAccountState.errorMessage?.let { error ->
+            currentUser?.uid?.let { uid -> ProfilePhotoStorage.clearLocalProfileAvatar(context, uid) }
+            auth.signOut()
+            Toast.makeText(context, "Account removed. Please log in again.", Toast.LENGTH_SHORT).show()
             viewModel.resetDeleteAccountState()
+            onLogOutSuccess()
         }
     }
-
-    var selectedBitmapForCrop by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
 
     // Image Picker Launcher with Interactive Circular Crop Dialog
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -183,6 +226,7 @@ fun ProfileScreen(
             onCropConfirmed = { croppedCircularBitmap ->
                 selectedBitmapForCrop = null
                 if (currentUser != null) {
+                    ProfilePhotoStorage.setPhotoRemoved(context, currentUser.uid, false)
                     coroutineScope.launch {
                         val localPath = withContext(Dispatchers.IO) {
                             ProfilePhotoStorage.saveCircularBitmapLocally(context, currentUser.uid, croppedCircularBitmap)
@@ -385,6 +429,7 @@ fun ProfileScreen(
                     .clickable {
                         profileImage = ""
                         if (currentUser != null) {
+                            ProfilePhotoStorage.setPhotoRemoved(context, currentUser.uid, true)
                             ProfilePhotoStorage.clearLocalProfileAvatar(context, currentUser.uid)
                             val currentData = userProfileState.data?.userData ?: UserData(
                                 firstName = firstName,
@@ -395,9 +440,9 @@ fun ProfileScreen(
                             )
                             val updated = currentData.copy(profileImage = "")
                             viewModel.updateProfile(UserDataParent(nodeId = currentUser.uid, userData = updated))
+                            Toast.makeText(context, "Profile photo removed", Toast.LENGTH_SHORT).show()
                         }
                     }
-
                     .padding(4.dp)
             )
         } else {
@@ -518,6 +563,210 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
+        // My Orders Card
+        val ordersList = userOrdersState.data ?: emptyList()
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = DarkCard,
+            border = androidx.compose.foundation.BorderStroke(1.dp, DarkInputBorder),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { showOrdersDialog = true }
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(imageVector = Icons.Default.AccountCircle, contentDescription = null, tint = PrimaryAccent, modifier = Modifier.size(22.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "My Orders",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            color = TextWhite
+                        )
+                        Text(
+                            text = if (ordersList.isEmpty()) "No active orders" else "${ordersList.size} orders placed",
+                            fontSize = 12.sp,
+                            color = TextMuted
+                        )
+                    }
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = PrimaryAccent.copy(alpha = 0.15f)
+                ) {
+                    Text(
+                        text = "View",
+                        color = PrimaryAccent,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
+                }
+            }
+        }
+
+        // Orders List Dialog
+        if (showOrdersDialog) {
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { showOrdersDialog = false },
+                title = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Order History (${ordersList.size})",
+                            fontWeight = FontWeight.Bold,
+                            color = TextWhite,
+                            fontSize = 17.sp
+                        )
+                        val hasActiveOrders = ordersList.any { !it.status.equals("Cancelled", ignoreCase = true) }
+                        if (ordersList.isNotEmpty()) {
+                            androidx.compose.material3.TextButton(
+                                onClick = {
+                                    if (hasActiveOrders) {
+                                        Toast.makeText(context, "⚠️ Please cancel all live orders before resetting order history!", Toast.LENGTH_LONG).show()
+                                    } else {
+                                        showResetOrdersConfirm = true
+                                    }
+                                }
+                            ) {
+                                Text(
+                                    text = "Reset 🗑️",
+                                    color = if (hasActiveOrders) TextMuted else DangerRed,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                },
+                text = {
+                    if (ordersList.isEmpty()) {
+                        Text(text = "You have not placed any orders yet.", color = TextMuted, fontSize = 14.sp)
+                    } else {
+                        androidx.compose.foundation.lazy.LazyColumn(
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.height(360.dp)
+                        ) {
+                            items(ordersList) { order ->
+                                val isCancelled = order.status.equals("Cancelled", ignoreCase = true)
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = DarkCardSecondary,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Column(modifier = Modifier.padding(12.dp)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = "Qty: ${order.quantity} ${if (order.quantity > 1) "units" else "unit"}",
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 14.sp,
+                                                color = TextWhite
+                                            )
+                                            Surface(
+                                                shape = RoundedCornerShape(4.dp),
+                                                color = if (isCancelled) DangerRed.copy(alpha = 0.15f) else com.example.shopping.ui.theme.SuccessGreen.copy(alpha = 0.15f)
+                                            ) {
+                                                Text(
+                                                    text = if (isCancelled) "Cancelled" else "Order Placed",
+                                                    color = if (isCancelled) DangerRed else com.example.shopping.ui.theme.SuccessGreen,
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                                )
+                                            }
+                                        }
+
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        Text(
+                                            text = "Status: ${if (isCancelled) "Cancelled" else "Order Placed"}",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = if (isCancelled) DangerRed else com.example.shopping.ui.theme.SuccessGreen
+                                        )
+                                        val orderAddress = if (order.address.isNotBlank() && !order.address.contains("Please set", ignoreCase = true)) {
+                                            order.address
+                                        } else if (address.isNotBlank() && !address.contains("Please set", ignoreCase = true)) {
+                                            address
+                                        } else {
+                                            "Home Delivery"
+                                        }
+                                        Text(text = "Delivery Address: $orderAddress", fontSize = 12.sp, color = TextWhite, maxLines = 2)
+
+                                        if (!isCancelled) {
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            OutlinedButton(
+                                                onClick = {
+                                                    viewModel.cancelOrder(order.orderId, order.productId, order.quantity) {
+                                                        Toast.makeText(context, "Order Cancelled & Stock Restored! 🔄", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                },
+                                                modifier = Modifier.fillMaxWidth().height(36.dp),
+                                                shape = RoundedCornerShape(6.dp),
+                                                border = androidx.compose.foundation.BorderStroke(1.dp, DangerRed)
+                                            ) {
+                                                Text(text = "Cancel Order & Restore Stock", color = DangerRed, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                containerColor = DarkCard,
+                confirmButton = {
+                    androidx.compose.material3.TextButton(onClick = { showOrdersDialog = false }) {
+                        Text(text = "Close", color = PrimaryAccent)
+                    }
+                }
+            )
+        }
+
+        // Reset Orders Confirmation Dialog
+        if (showResetOrdersConfirm) {
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { showResetOrdersConfirm = false },
+                title = { Text("Reset Order History", fontWeight = FontWeight.Bold, color = TextWhite) },
+                text = { Text("Are you sure you want to clear your entire order history? This will permanently delete your order records.", color = TextMuted) },
+                containerColor = DarkCard,
+                confirmButton = {
+                    androidx.compose.material3.Button(
+                        onClick = {
+                            showResetOrdersConfirm = false
+                            viewModel.resetOrderHistory {
+                                Toast.makeText(context, "Order history reset successfully! 🗑️", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = DangerRed)
+                    ) {
+                        Text("Clear All", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    androidx.compose.material3.TextButton(onClick = { showResetOrdersConfirm = false }) {
+                        Text("Cancel", color = TextMuted)
+                    }
+                }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
         // Appearance Theme Mode Switcher Card (Dark / Light Mode)
         Surface(
             shape = RoundedCornerShape(12.dp),
@@ -554,6 +803,40 @@ fun ProfileScreen(
                         uncheckedThumbColor = Color(0xFF181920),
                         uncheckedTrackColor = com.example.shopping.ui.theme.WarmLightCardSecondary
                     )
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // 👑 App Owner / Admin Portal (Horizontal, Centered)
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = DarkCard,
+            border = androidx.compose.foundation.BorderStroke(1.dp, PrimaryAccent.copy(alpha = 0.6f)),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onAdminClick() }
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = null,
+                    tint = PrimaryAccent,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = "👑 Owner Product Portal (Manage)",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = TextWhite
                 )
             }
         }

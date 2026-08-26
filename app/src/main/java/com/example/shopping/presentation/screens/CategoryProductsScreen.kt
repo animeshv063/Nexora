@@ -116,19 +116,35 @@ fun CategoryProductsScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            contentPadding = PaddingValues(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-            modifier = Modifier.fillMaxSize()
-        ) {
-            items(filteredProducts) { product ->
-                ProductCardDark(
-                    product = product,
-                    modifier = Modifier.fillMaxWidth(),
-                    onProductClick = { onProductClick(product.productId) }
+        if (filteredProducts.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Nothing to display",
+                    color = TextMuted,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium
                 )
+            }
+        } else {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                contentPadding = PaddingValues(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                items(filteredProducts) { product ->
+                    ProductCardDark(
+                        product = product,
+                        modifier = Modifier.fillMaxWidth(),
+                        onProductClick = { onProductClick(product.productId) }
+                    )
+                }
             }
         }
     }

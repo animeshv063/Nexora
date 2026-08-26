@@ -102,14 +102,30 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        Image(
+            painter = painterResource(id = R.drawable.app_logo),
+            contentDescription = "Nexora Logo",
+            modifier = Modifier
+                .size(95.dp)
+                .padding(bottom = 12.dp)
+        )
+
         Text(
-            text = "LogIn",
-            fontSize = 28.sp,
+            text = "Welcome to Nexora",
+            fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             color = TextWhite,
             modifier = Modifier
                 .align(Alignment.Start)
-                .padding(bottom = 24.dp)
+                .padding(bottom = 4.dp)
+        )
+        Text(
+            text = "Sign in to continue shopping",
+            fontSize = 13.sp,
+            color = TextMuted,
+            modifier = Modifier
+                .align(Alignment.Start)
+                .padding(bottom = 20.dp)
         )
 
         CustomTextField(

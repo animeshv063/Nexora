@@ -146,17 +146,13 @@ object ImageCropUtils {
     }
 
     /**
-     * Converts a circular cropped bitmap into a base64 Data URI string.
+     * Converts a base64 string back into a Bitmap.
      */
-    fun createCircularCroppedBase64(context: Context, sourceUri: Uri): String? {
+    fun base64ToBitmap(base64String: String): Bitmap? {
         return try {
-            val originalBitmap = loadBitmap(context, sourceUri) ?: return null
-            val minEdge = min(originalBitmap.width, originalBitmap.height)
-            val xOffset = (originalBitmap.width - minEdge) / 2
-            val yOffset = (originalBitmap.height - minEdge) / 2
-            val rect = Rect(xOffset, yOffset, xOffset + minEdge, yOffset + minEdge)
-            val circular = cropCircularBitmap(originalBitmap, rect)
-            bitmapToBase64(circular)
+            val clean = if (base64String.contains(",")) base64String.substringAfter(",") else base64String
+            val decodedBytes = android.util.Base64.decode(clean, android.util.Base64.DEFAULT)
+            BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
         } catch (e: Exception) {
             e.printStackTrace()
             null

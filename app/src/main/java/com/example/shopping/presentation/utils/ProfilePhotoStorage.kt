@@ -75,6 +75,18 @@ object ProfilePhotoStorage {
         return null
     }
 
+    private const val KEY_REMOVED_PREFIX = "avatar_removed_"
+
+    fun setPhotoRemoved(context: Context, uid: String, isRemoved: Boolean) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putBoolean(KEY_REMOVED_PREFIX + uid, isRemoved).apply()
+    }
+
+    fun isPhotoRemoved(context: Context, uid: String): Boolean {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getBoolean(KEY_REMOVED_PREFIX + uid, false)
+    }
+
     /**
      * Removes the locally stored profile picture.
      */

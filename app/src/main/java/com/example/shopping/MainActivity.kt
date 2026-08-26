@@ -15,6 +15,7 @@ class MainActivity : ComponentActivity(), PaymentResultListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        com.razorpay.Checkout.preload(applicationContext)
         enableEdgeToEdge()
         setContent {
             ShoppingAppTheme {
@@ -24,10 +25,17 @@ class MainActivity : ComponentActivity(), PaymentResultListener {
     }
 
     override fun onPaymentSuccess(razorpayPaymentId: String?) {
-        Toast.makeText(this, "Payment Successful! ID: $razorpayPaymentId 🎉", Toast.LENGTH_LONG).show()
+        val txnId = razorpayPaymentId ?: "TXN_${System.currentTimeMillis()}"
+        Toast.makeText(this, "Payment Successful! ID: $txnId 🎉", Toast.LENGTH_LONG).show()
+        com.example.shopping.presentation.utils.PaymentEventManager.emitEvent(
+            com.example.shopping.presentation.utils.PaymentEventManager.PaymentEvent.Success(txnId)
+        )
     }
 
     override fun onPaymentError(code: Int, response: String?) {
-        Toast.makeText(this, "Payment Failed or Cancelled: $response", Toast.LENGTH_LONG).show()
+        val errMsg = response ?: "Payment cancelled or no payment method available"
+        com.example.shopping.presentation.utils.PaymentEventManager.emitEvent(
+            com.example.shopping.presentation.utils.PaymentEventManager.PaymentEvent.Error(code, errMsg)
+        )
     }
 }

@@ -12,12 +12,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,13 +42,6 @@ import com.example.shopping.ui.theme.DarkCardSecondary
 import com.example.shopping.ui.theme.PrimaryAccent
 import com.example.shopping.ui.theme.TextMuted
 import com.example.shopping.ui.theme.TextWhite
-import androidx.compose.foundation.shape.CircleShape
-
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Surface
 
 @Composable
 fun ProductCardDark(
@@ -50,6 +50,8 @@ fun ProductCardDark(
     onProductClick: () -> Unit,
     onRemoveFavorite: (() -> Unit)? = null
 ) {
+    val rating = remember(product.productId) { RatingHelper.getRatingForProduct(product.productId) }
+
     Card(
         modifier = modifier
             .width(160.dp)
@@ -87,6 +89,34 @@ fun ProductCardDark(
                     }
                 }
 
+                // Dynamic Rating Badge (4.0 to 5.0 random on each open)
+                Surface(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .align(Alignment.TopStart),
+                    shape = RoundedCornerShape(6.dp),
+                    color = Color.Black.copy(alpha = 0.65f)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = "Rating",
+                            tint = Color(0xFFFBBF24),
+                            modifier = Modifier.size(11.dp)
+                        )
+                        Spacer(modifier = Modifier.width(3.dp))
+                        Text(
+                            text = rating,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextWhite
+                        )
+                    }
+                }
+
                 if (onRemoveFavorite != null) {
                     Surface(
                         modifier = Modifier
@@ -107,8 +137,6 @@ fun ProductCardDark(
                     }
                 }
             }
-
-
 
             Column(
                 modifier = Modifier
