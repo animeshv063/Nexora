@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -154,12 +155,11 @@ fun CartScreen(
                                     .padding(12.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                AsyncImage(
-                                    model = item.image,
+                                com.example.shopping.presentation.utils.SmartAsyncImage(
+                                    imageUrl = item.image,
                                     contentDescription = item.name,
-                                    modifier = Modifier
-                                        .size(76.dp)
-                                        .clip(RoundedCornerShape(10.dp)),
+                                    modifier = Modifier.size(72.dp),
+                                    shape = RoundedCornerShape(10.dp),
                                     contentScale = ContentScale.Crop
                                 )
 

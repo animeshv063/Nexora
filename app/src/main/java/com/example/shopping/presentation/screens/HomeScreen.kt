@@ -209,15 +209,6 @@ fun HomeScreen(
                             modifier = Modifier.size(22.dp)
                         )
                     }
-                    // Notification badge
-                    Surface(
-                        shape = CircleShape,
-                        color = com.example.shopping.ui.theme.AccentCoral,
-                        modifier = Modifier
-                            .size(9.dp)
-                            .align(Alignment.TopEnd)
-                            .padding(top = 8.dp, end = 8.dp)
-                    ) {}
                 }
             }
         }

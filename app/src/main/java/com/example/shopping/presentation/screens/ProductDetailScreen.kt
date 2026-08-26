@@ -9,8 +9,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import com.example.shopping.presentation.utils.SmartAsyncImage
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -128,15 +130,17 @@ fun ProductDetailScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(380.dp)
+                    .height(310.dp)
                     .background(DarkCard)
             ) {
                 if (product.image.isNotEmpty()) {
-                    AsyncImage(
-                        model = product.image,
+                    SmartAsyncImage(
+                        imageUrl = product.image,
                         contentDescription = product.name,
+                        shape = androidx.compose.ui.graphics.RectangleShape,
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.Crop,
+                        errorPlaceholderText = "${product.name}\n(Unable to load image link)"
                     )
                 }
 

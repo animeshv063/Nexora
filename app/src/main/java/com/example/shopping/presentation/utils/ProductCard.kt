@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -68,14 +69,13 @@ fun ProductCard(
                     .background(com.example.shopping.ui.theme.DarkCard)
             ) {
                 if (product.image.isNotEmpty()) {
-                    AsyncImage(
-                        model = product.image,
+                    SmartAsyncImage(
+                        imageUrl = product.image,
                         contentDescription = product.name,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(180.dp)
-                            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
-                        contentScale = ContentScale.Crop
+                        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                        errorPlaceholderText = product.name.take(15)
                     )
                 } else {
                     Box(

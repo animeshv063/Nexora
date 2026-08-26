@@ -100,13 +100,15 @@ fun WishlistScreen(
                         text = "Your Wishlist is Empty",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TextWhite
+                        color = TextWhite,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Explore clothes and tap heart to save them here",
+                        text = "Explore products and tap the heart icon to save them here",
                         fontSize = 14.sp,
-                        color = TextMuted
+                        color = TextMuted,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
                 }
             }

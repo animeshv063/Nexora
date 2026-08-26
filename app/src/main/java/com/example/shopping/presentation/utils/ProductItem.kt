@@ -21,12 +21,14 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.shopping.domain.models.ProductDataModels
 
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+
 @Composable
 fun ProductItem(
-
-    product : ProductDataModels,
-    onProductClick: () -> Unit){
-
+    product: ProductDataModels,
+    onProductClick: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth().clickable(
             onClick = onProductClick
@@ -36,15 +38,17 @@ fun ProductItem(
             containerColor = androidx.compose.ui.graphics.Color.White
         ),
         shape = RoundedCornerShape(8.dp)
-    ){
-        Column{
-            AsyncImage(model = product.image, contentDescription = null,
-                    modifier = Modifier.fillMaxWidth()
-                        .background(color = Color.White)
-                        .height(200.dp)
-                        .clip(RoundedCornerShape(topStart =  8.dp, topEnd = 8.dp)),
+    ) {
+        Column {
+            SmartAsyncImage(
+                imageUrl = product.image,
+                contentDescription = product.name,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp),
+                shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp),
                 contentScale = ContentScale.Crop
-                )
+            )
 
             Column(
                 modifier = Modifier.padding(8.dp)

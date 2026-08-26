@@ -2,10 +2,12 @@ package com.example.shopping.presentation.utils
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -35,10 +37,10 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import com.example.shopping.domain.models.ProductDataModels
 import com.example.shopping.ui.theme.DarkCard
 import com.example.shopping.ui.theme.DarkCardSecondary
+import com.example.shopping.ui.theme.OrangePrimary
 import com.example.shopping.ui.theme.PrimaryAccent
 import com.example.shopping.ui.theme.TextMuted
 import com.example.shopping.ui.theme.TextWhite
@@ -54,26 +56,27 @@ fun ProductCardDark(
 
     Card(
         modifier = modifier
-            .width(160.dp)
+            .fillMaxWidth()
             .clickable(onClick = onProductClick),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = DarkCardSecondary)
     ) {
         Column {
+            // Product Image Container
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(180.dp)
+                    .height(170.dp)
                     .background(DarkCard)
             ) {
                 if (product.image.isNotEmpty()) {
-                    AsyncImage(
-                        model = product.image,
+                    SmartAsyncImage(
+                        imageUrl = product.image,
                         contentDescription = product.name,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
-                        contentScale = ContentScale.Crop
+                        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                        errorPlaceholderText = "${product.name.take(15)}..."
                     )
                 } else {
                     Box(
@@ -89,7 +92,7 @@ fun ProductCardDark(
                     }
                 }
 
-                // Dynamic Rating Badge (4.0 to 5.0 random on each open)
+                // Dynamic Rating Badge
                 Surface(
                     modifier = Modifier
                         .padding(8.dp)
@@ -113,6 +116,28 @@ fun ProductCardDark(
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = TextWhite
+                        )
+                    }
+                }
+
+                // Discount Badge if discount exists
+                val orig = product.price.toDoubleOrNull() ?: 0.0
+                val fin = product.finalPrice.toDoubleOrNull() ?: 0.0
+                if (orig > 0 && fin > 0 && fin < orig) {
+                    val discountPercent = (((orig - fin) / orig) * 100).toInt()
+                    Surface(
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .align(Alignment.BottomStart),
+                        shape = RoundedCornerShape(6.dp),
+                        color = Color(0xFFEF4444)
+                    ) {
+                        Text(
+                            text = "-$discountPercent%",
+                            color = Color.White,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
                         )
                     }
                 }
@@ -142,8 +167,20 @@ fun ProductCardDark(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(DarkCardSecondary)
-                    .padding(10.dp)
+                    .padding(horizontal = 12.dp, vertical = 10.dp)
             ) {
+                if (product.category.isNotEmpty()) {
+                    Text(
+                        text = product.category.uppercase(),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = TextMuted,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                }
+
                 Text(
                     text = product.name,
                     fontSize = 13.sp,
@@ -153,32 +190,38 @@ fun ProductCardDark(
                     color = TextWhite
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Text(
-                        text = "₹${product.finalPrice.ifEmpty { product.price }}",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextWhite
-                    )
-
-                    if (product.price.isNotEmpty() && product.price != product.finalPrice) {
-                        Spacer(modifier = Modifier.width(6.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = "₹${product.price}",
-                            fontSize = 11.sp,
-                            textDecoration = TextDecoration.LineThrough,
-                            color = TextMuted
+                            text = "₹${product.finalPrice.ifEmpty { product.price }}",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = OrangePrimary
                         )
+
+                        if (product.price.isNotEmpty() && product.price != product.finalPrice) {
+                            Spacer(modifier = Modifier.width(5.dp))
+                            Text(
+                                text = "₹${product.price}",
+                                fontSize = 11.sp,
+                                textDecoration = TextDecoration.LineThrough,
+                                color = TextMuted
+                            )
+                        }
                     }
 
                     if (product.availableUnits > 0) {
-                        Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "(${product.availableUnits} left)",
+                            text = "${product.availableUnits} left",
                             fontSize = 10.sp,
-                            color = TextMuted,
+                            color = if (product.availableUnits <= 5) Color(0xFFEF4444) else TextMuted,
+                            fontWeight = if (product.availableUnits <= 5) FontWeight.Bold else FontWeight.Normal,
                             maxLines = 1
                         )
                     }

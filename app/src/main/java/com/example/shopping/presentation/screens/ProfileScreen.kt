@@ -372,12 +372,12 @@ fun ProfileScreen(
             ) {
 
                 if (profileImage.isNotEmpty()) {
-                    AsyncImage(
-                        model = profileImage,
+                    com.example.shopping.presentation.utils.SmartAsyncImage(
+                        imageUrl = profileImage,
                         contentDescription = "Profile Photo",
+                        shape = CircleShape,
                         modifier = Modifier
-                            .fillMaxSize()
-                            .clip(CircleShape),
+                            .fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
                 } else {

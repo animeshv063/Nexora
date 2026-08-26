@@ -39,6 +39,8 @@ import com.example.shopping.ui.theme.DarkCardSecondary
 import com.example.shopping.ui.theme.OrangePrimary
 import kotlinx.coroutines.delay
 
+import androidx.compose.foundation.layout.aspectRatio
+
 @Composable
 fun Banner(banners: List<BannerDataModels>) {
     if (banners.isEmpty()) {
@@ -55,7 +57,7 @@ fun Banner(banners: List<BannerDataModels>) {
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Nothing to display",
+                    text = "No Banners Available",
                     color = com.example.shopping.ui.theme.TextMuted,
                     fontSize = 14.sp
                 )
@@ -66,26 +68,20 @@ fun Banner(banners: List<BannerDataModels>) {
 
     val displayBanners = banners
 
-
     val pagerState = androidx.compose.foundation.pager.rememberPagerState(
         initialPage = 0,
         pageCount = { displayBanners.size }
     )
 
-    androidx.compose.runtime.LaunchedEffect(displayBanners) {
-        if (displayBanners.size > 1) {
-            while (true) {
-                kotlinx.coroutines.delay(3500)
-                try {
-                    val nextPage = (pagerState.currentPage + 1) % displayBanners.size
-                    pagerState.animateScrollToPage(nextPage, animationSpec = tween(600))
-                } catch (e: Exception) {
-                    break
-                }
+    LaunchedEffect(pagerState) {
+        while (true) {
+            delay(3500)
+            if (displayBanners.isNotEmpty()) {
+                val nextPage = (pagerState.currentPage + 1) % displayBanners.size
+                pagerState.animateScrollToPage(nextPage)
             }
         }
     }
-
 
     Column(
         modifier = Modifier
@@ -93,7 +89,7 @@ fun Banner(banners: List<BannerDataModels>) {
             .padding(vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        HorizontalPager(
+        androidx.compose.foundation.pager.HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxWidth()
         ) { page ->
@@ -101,7 +97,7 @@ fun Banner(banners: List<BannerDataModels>) {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(180.dp)
+                    .height(175.dp)
                     .padding(horizontal = 16.dp),
                 shape = RoundedCornerShape(16.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),

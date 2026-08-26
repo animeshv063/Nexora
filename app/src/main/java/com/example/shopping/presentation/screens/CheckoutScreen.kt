@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -489,12 +490,11 @@ fun CheckoutScreen(
                     .padding(14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                AsyncImage(
-                    model = product.image,
+                com.example.shopping.presentation.utils.SmartAsyncImage(
+                    imageUrl = product.image,
                     contentDescription = product.name,
-                    modifier = Modifier
-                        .size(70.dp)
-                        .clip(RoundedCornerShape(10.dp)),
+                    modifier = Modifier.size(70.dp),
+                    shape = RoundedCornerShape(10.dp),
                     contentScale = ContentScale.Crop
                 )
 

@@ -126,7 +126,7 @@ fun SignUpScreen(
             painter = painterResource(id = R.drawable.app_logo),
             contentDescription = "Nexora Logo",
             modifier = Modifier
-                .size(90.dp)
+                .size(105.dp)
                 .padding(bottom = 10.dp)
         )
 

@@ -30,6 +30,8 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -59,6 +61,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -88,6 +91,7 @@ import com.example.shopping.ui.theme.SuccessGreen
 import com.example.shopping.ui.theme.TextMuted
 import com.example.shopping.ui.theme.TextWhite
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -96,6 +100,7 @@ fun AdminDashboardScreen(
     onBackClick: () -> Unit
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val firestore = FirebaseFirestore.getInstance()
     val productsState by viewModel.productsState.collectAsState()
     val categoriesState by viewModel.categoriesState.collectAsState()
@@ -579,6 +584,59 @@ fun AdminDashboardScreen(
                                 HorizontalDivider(color = DarkInputBorder.copy(alpha = 0.5f), modifier = Modifier.padding(vertical = 8.dp))
 
                                 KeyValRow(key = "image", value = prodImage, placeholder = "Paste image link https://...", onValueChange = { prodImage = it })
+
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = DarkInputBg,
+                                        border = BorderStroke(1.dp, OrangePrimary.copy(alpha = 0.6f)),
+                                        modifier = Modifier.clickable {
+                                            prodImage = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1000&q=80"
+                                        }
+                                    ) {
+                                        Text(
+                                            text = "💡 Shoes",
+                                            fontSize = 11.sp,
+                                            color = OrangePrimary,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                                        )
+                                    }
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = DarkInputBg,
+                                        border = BorderStroke(1.dp, OrangePrimary.copy(alpha = 0.6f)),
+                                        modifier = Modifier.clickable {
+                                            prodImage = "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=1000&q=80"
+                                        }
+                                    ) {
+                                        Text(
+                                            text = "💡 Shirt",
+                                            fontSize = 11.sp,
+                                            color = OrangePrimary,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                                        )
+                                    }
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = DarkInputBg,
+                                        border = BorderStroke(1.dp, OrangePrimary.copy(alpha = 0.6f)),
+                                        modifier = Modifier.clickable {
+                                            prodImage = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=1000&q=80"
+                                        }
+                                    ) {
+                                        Text(
+                                            text = "💡 Watch",
+                                            fontSize = 11.sp,
+                                            color = OrangePrimary,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                                        )
+                                    }
+                                }
+
                                 HorizontalDivider(color = DarkInputBorder.copy(alpha = 0.5f), modifier = Modifier.padding(vertical = 8.dp))
 
                                 Row(
@@ -616,26 +674,43 @@ fun AdminDashboardScreen(
 
                         Spacer(modifier = Modifier.height(14.dp))
 
-                        if (prodImage.isNotBlank()) {
-                            Text(text = "Live Image Preview", fontWeight = FontWeight.SemiBold, color = TextWhite, fontSize = 13.sp)
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Surface(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(160.dp),
-                                shape = RoundedCornerShape(12.dp),
-                                color = DarkCardSecondary,
-                                border = BorderStroke(1.dp, DarkInputBorder)
-                            ) {
-                                AsyncImage(
-                                    model = prodImage,
-                                    contentDescription = "Preview",
+                        // Live Portrait 3:4 Product Preview
+                        Text(text = "Live Portrait (3:4) Product Preview", fontWeight = FontWeight.SemiBold, color = TextWhite, fontSize = 13.sp)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(180.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(DarkCardSecondary),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (prodImage.isNotBlank()) {
+                                SmartAsyncImage(
+                                    imageUrl = prodImage,
+                                    contentDescription = "Product Preview",
+                                    shape = RoundedCornerShape(12.dp),
                                     modifier = Modifier.fillMaxSize(),
                                     contentScale = ContentScale.Crop
                                 )
+                            } else {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.ShoppingCart,
+                                        contentDescription = null,
+                                        tint = OrangePrimary.copy(alpha = 0.7f),
+                                        modifier = Modifier.size(40.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(text = "Live Product Image Preview", color = TextWhite, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                                    Text(text = "Enter or paste any product image URL above to preview", color = TextMuted, fontSize = 11.sp)
+                                }
                             }
-                            Spacer(modifier = Modifier.height(14.dp))
                         }
+                        Spacer(modifier = Modifier.height(14.dp))
 
                         // Submit Add Product Button
                         Button(
@@ -643,7 +718,7 @@ fun AdminDashboardScreen(
                                 val name = prodName.trim()
                                 val price = prodPrice.trim()
                                 val finalPrice = prodFinalPrice.trim().ifEmpty { price }
-                                val image = prodImage.trim()
+                                val image = sanitizeImageUrl(prodImage)
                                 val desc = prodDescription.trim()
                                 val available = prodAvailableUnits.toIntOrNull() ?: 30
                                 val initial = prodInitialUnits.toIntOrNull() ?: available
@@ -784,18 +859,13 @@ fun AdminDashboardScreen(
                                                 .padding(10.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Surface(
-                                                modifier = Modifier.size(60.dp),
+                                            SmartAsyncImage(
+                                                imageUrl = product.image,
+                                                contentDescription = product.name,
                                                 shape = RoundedCornerShape(8.dp),
-                                                color = DarkInputBg
-                                            ) {
-                                                AsyncImage(
-                                                    model = product.image,
-                                                    contentDescription = product.name,
-                                                    modifier = Modifier.fillMaxSize(),
-                                                    contentScale = ContentScale.Crop
-                                                )
-                                            }
+                                                modifier = Modifier.size(55.dp),
+                                                contentScale = ContentScale.Crop
+                                            )
 
                                             Spacer(modifier = Modifier.width(12.dp))
 
@@ -1138,19 +1208,43 @@ fun AdminDashboardScreen(
 
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        if (newBanImage.isNotBlank()) {
-                            Text(text = "Live 16:9 Banner Preview", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextWhite)
-                            Spacer(modifier = Modifier.height(6.dp))
-                            SmartAsyncImage(
-                                imageUrl = newBanImage,
-                                contentDescription = "Banner Preview",
-                                shape = RoundedCornerShape(10.dp),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .aspectRatio(16f / 9f)
-                            )
-                            Spacer(modifier = Modifier.height(10.dp))
+                        // Live 16:9 Banner Preview
+                        Text(text = "Live 16:9 Banner Preview", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextWhite)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(140.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(DarkCardSecondary),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (newBanImage.isNotBlank()) {
+                                SmartAsyncImage(
+                                    imageUrl = newBanImage,
+                                    contentDescription = "Banner Preview",
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Star,
+                                        contentDescription = null,
+                                        tint = OrangePrimary.copy(alpha = 0.7f),
+                                        modifier = Modifier.size(40.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(text = "Live Banner Preview", color = TextWhite, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                                    Text(text = "Enter or paste any banner image URL above to preview in real-time", color = TextMuted, fontSize = 11.sp)
+                                }
+                            }
                         }
+                        Spacer(modifier = Modifier.height(10.dp))
 
                         Button(
                             onClick = {
@@ -1213,6 +1307,7 @@ fun AdminDashboardScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(vertical = 6.dp)
+                                        .height(130.dp)
                                 ) {
                                     Column(modifier = Modifier.padding(12.dp)) {
                                         SmartAsyncImage(
@@ -1221,7 +1316,7 @@ fun AdminDashboardScreen(
                                             shape = RoundedCornerShape(8.dp),
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .aspectRatio(16f / 8f)
+                                                .height(75.dp)
                                         )
 
                                         Spacer(modifier = Modifier.height(8.dp))
@@ -1488,6 +1583,18 @@ fun AdminDashboardScreen(
                         )
                     )
 
+                    if (editImage.isNotBlank()) {
+                        SmartAsyncImage(
+                            imageUrl = editImage,
+                            contentDescription = "Edit Product Preview",
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(160.dp),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+
                     OutlinedTextField(
                         value = editDescription,
                         onValueChange = { editDescription = it },
@@ -1516,7 +1623,7 @@ fun AdminDashboardScreen(
                             finalPrice = editFinalPrice.trim(),
                             availableUnits = units,
                             initialUnits = units,
-                            image = editImage.trim(),
+                            image = sanitizeImageUrl(editImage),
                             description = editDescription.trim()
                         )
                         viewModel.updateProduct(
@@ -1711,7 +1818,7 @@ fun AdminDashboardScreen(
                             shape = RoundedCornerShape(8.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .aspectRatio(16f / 8f)
+                                .height(120.dp)
                         )
                     }
                 }

@@ -106,7 +106,7 @@ fun LoginScreen(
             painter = painterResource(id = R.drawable.app_logo),
             contentDescription = "Nexora Logo",
             modifier = Modifier
-                .size(95.dp)
+                .size(110.dp)
                 .padding(bottom = 12.dp)
         )
 
