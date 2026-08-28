@@ -3,6 +3,7 @@ package com.example.shopping.presentation.utils
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -106,9 +107,15 @@ fun LogOutAlertDialog(
                             .height(46.dp),
                         shape = RoundedCornerShape(10.dp),
                         border = BorderStroke(1.dp, DarkInputBorder),
-                        colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.Transparent)
+                        colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.Transparent),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
                     ){
-                        Text(text = "Cancel", color = TextWhite, fontWeight = FontWeight.Medium)
+                        Text(
+                            text = "Cancel",
+                            color = TextWhite,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 14.sp
+                        )
                     }
 
                     Button(
@@ -117,12 +124,15 @@ fun LogOutAlertDialog(
                             .weight(1f)
                             .height(46.dp),
                         shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = com.example.shopping.ui.theme.DangerRed)
+                        colors = ButtonDefaults.buttonColors(containerColor = com.example.shopping.ui.theme.DangerRed),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
                     ) {
                         Text(
-                            text = "Yes, Log Out",
+                            text = "Log Out",
                             color = Color.White,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            maxLines = 1
                         )
                     }
                 }
