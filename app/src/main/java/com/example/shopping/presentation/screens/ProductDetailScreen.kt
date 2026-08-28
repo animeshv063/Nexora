@@ -62,6 +62,7 @@ import coil.compose.AsyncImage
 import com.example.shopping.domain.models.CartDataModels
 import com.example.shopping.domain.models.ProductDataModels
 import com.example.shopping.presentation.viewModels.ShoppingAppViewModel
+import com.example.shopping.ui.theme.AccentCoral
 import com.example.shopping.ui.theme.ButtonTextColor
 import com.example.shopping.ui.theme.DarkBg
 import com.example.shopping.ui.theme.DarkCard
@@ -225,7 +226,7 @@ fun ProductDetailScreen(
                                 Icon(
                                     imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                                     contentDescription = "Favorite",
-                                    tint = if (isFavorite) OrangePrimary else TextWhite
+                                    tint = if (isFavorite) AccentCoral else TextWhite
                                 )
                             }
                         }
@@ -244,15 +245,16 @@ fun ProductDetailScreen(
                         .fillMaxWidth()
                         .padding(20.dp)
                 ) {
-                    // Category Badge & Available Units Status
+                    // Category, Gender, Rating & Stock Status Badges
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f, fill = false)
                         ) {
                             Surface(
                                 shape = RoundedCornerShape(6.dp),
@@ -261,9 +263,10 @@ fun ProductDetailScreen(
                                 Text(
                                     text = product.category.ifEmpty { "General" },
                                     color = OrangePrimary,
-                                    fontSize = 12.sp,
+                                    fontSize = 11.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                    maxLines = 1,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                 )
                             }
 
@@ -279,9 +282,10 @@ fun ProductDetailScreen(
                                         else -> "👨 Men"
                                     },
                                     color = Color(0xFFA5B4FC),
-                                    fontSize = 12.sp,
+                                    fontSize = 11.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    maxLines = 1,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp)
                                 )
                             }
 
@@ -293,17 +297,19 @@ fun ProductDetailScreen(
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp)
                                 ) {
                                     Text(
                                         text = "$prodRating ★",
                                         color = Color(0xFFFBBF24),
-                                        fontSize = 12.sp,
+                                        fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
                             }
                         }
+
+                        Spacer(modifier = Modifier.width(8.dp))
 
                         // Stock Availability Indicator
                         Surface(
@@ -311,11 +317,12 @@ fun ProductDetailScreen(
                             color = if (product.availableUnits > 0) SuccessGreen.copy(alpha = 0.15f) else Color(0xFFEF4444).copy(alpha = 0.15f)
                         ) {
                             Text(
-                                text = if (product.availableUnits > 0) "In Stock: ${product.availableUnits} units" else "Out of Stock",
+                                text = if (product.availableUnits > 0) "In Stock: ${product.availableUnits}" else "Out of Stock",
                                 color = if (product.availableUnits > 0) SuccessGreen else Color(0xFFEF4444),
-                                fontSize = 12.sp,
+                                fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                maxLines = 1,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
                     }

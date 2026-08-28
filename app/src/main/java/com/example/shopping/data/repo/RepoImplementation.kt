@@ -421,11 +421,23 @@ class RepoImplementation @Inject constructor(
         trySend(ResultState.Loading)
         val uid = firebaseAuth.currentUser?.uid
         if (uid != null) {
-            firebaseFirestore.collection(ADDTOFAV).document(uid).collection("User_Fav").get().addOnSuccessListener {
-                val fav = it.documents.mapNotNull { document ->
-                    parseProductDocument(document)
+            firebaseFirestore.collection(ADDTOFAV).document(uid).collection("User_Fav").get().addOnSuccessListener { snapshot ->
+                val favDocIds = snapshot.documents.map { it.id }
+                if (favDocIds.isEmpty()) {
+                    trySend(ResultState.Success(emptyList()))
+                    return@addOnSuccessListener
                 }
-                trySend(ResultState.Success(fav))
+                // Fetch live product documents from Products collection
+                firebaseFirestore.collection("Products").get().addOnSuccessListener { prodSnapshot ->
+                    val productMap = prodSnapshot.documents.mapNotNull { parseProductDocument(it) }.associateBy { it.productId }
+                    val fullFavList = favDocIds.mapNotNull { id ->
+                        productMap[id] ?: snapshot.documents.find { it.id == id }?.let { parseProductDocument(it) }
+                    }
+                    trySend(ResultState.Success(fullFavList))
+                }.addOnFailureListener {
+                    val fallback = snapshot.documents.mapNotNull { parseProductDocument(it) }
+                    trySend(ResultState.Success(fallback))
+                }
             }.addOnFailureListener {
                 trySend(ResultState.Success(emptyList()))
             }

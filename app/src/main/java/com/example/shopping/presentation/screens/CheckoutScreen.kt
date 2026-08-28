@@ -121,6 +121,7 @@ fun CheckoutScreen(
     var tempName by remember { mutableStateOf("") }
     var tempPhone by remember { mutableStateOf("") }
     var tempAddress by remember { mutableStateOf("") }
+    var showOrderConfirmDialog by remember { mutableStateOf(false) }
 
     val product = productDetailState.data ?: ProductDataModels(
         name = "Fashion Product",
@@ -157,6 +158,18 @@ fun CheckoutScreen(
                 onOrderSuccess()
             }
         )
+    }
+
+    fun proceedToPayOrOrder() {
+        if (!isAddressValid) {
+            Toast.makeText(context, "⚠️ Please enter your delivery address to proceed", Toast.LENGTH_LONG).show()
+            tempName = recipientName
+            tempPhone = recipientPhone
+            tempAddress = ""
+            showAddressDialog = true
+            return
+        }
+        showOrderConfirmDialog = true
     }
 
     LaunchedEffect(Unit) {
@@ -599,13 +612,7 @@ fun CheckoutScreen(
 
         // Pay & Place Order Button
         Button(
-            onClick = {
-                if (selectedPaymentMethod.startsWith("Razorpay")) {
-                    startRazorpayPayment()
-                } else {
-                    handlePlaceOrder()
-                }
-            },
+            onClick = { proceedToPayOrOrder() },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
@@ -622,5 +629,61 @@ fun CheckoutScreen(
         }
 
         Spacer(modifier = Modifier.height(80.dp))
+    }
+
+    // Place Order Confirmation Modal Dialog (2-Step Safety Verification)
+    if (showOrderConfirmDialog) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showOrderConfirmDialog = false },
+            title = {
+                Text(text = "Confirm Order", fontWeight = FontWeight.Bold, color = TextWhite)
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "Are you sure you want to confirm and place this order?",
+                        color = TextWhite,
+                        fontSize = 14.sp
+                    )
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = DarkCardSecondary,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(10.dp)) {
+                            Text(text = "Item: ${product.name}", color = TextWhite, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                            Text(text = "Quantity: $quantity", color = TextMuted, fontSize = 12.sp)
+                            Text(text = "Total Payable: ₹${total.toInt()}", color = OrangePrimary, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                            Text(text = "Payment: $selectedPaymentMethod", color = TextMuted, fontSize = 12.sp)
+                        }
+                    }
+                }
+            },
+            containerColor = DarkCard,
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showOrderConfirmDialog = false
+                        if (selectedPaymentMethod.startsWith("Razorpay")) {
+                            startRazorpayPayment()
+                        } else {
+                            handlePlaceOrder()
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)
+                ) {
+                    Text(
+                        text = if (selectedPaymentMethod.startsWith("Razorpay")) "Proceed to Pay" else "Confirm & Place Order",
+                        color = ButtonTextColor,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = { showOrderConfirmDialog = false }) {
+                    Text(text = "Cancel", color = TextMuted)
+                }
+            }
+        )
     }
 }
