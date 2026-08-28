@@ -94,26 +94,35 @@ fun HomeScreen(
     val categoriesList = categoriesState.data?.filterNotNull() ?: emptyList()
     val productsList = productsState.data ?: emptyList()
 
-    // ⚡ Random Flash Sale Offers on Firebase Products (Max 5 products with ₹200 to ₹700 off)
+    // ⚡ Flash Sale: Products with genuine discount percentage based on real price and finalPrice
     val flashSaleProducts = remember(productsList) {
         if (productsList.isEmpty()) emptyList()
         else {
-            val possibleDiscounts = listOf(200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700)
-            productsList.shuffled().take(5).map { product ->
-                val basePrice = product.price.toDoubleOrNull() ?: 1499.0
-                val discount = possibleDiscounts.random()
-                val discountedPrice = maxOf(99.0, basePrice - discount).toInt().toString()
-                product.copy(
-                    finalPrice = discountedPrice
-                )
-            }
+            // Sort by actual discount percentage (highest discount first) or take top discounted items
+            productsList
+                .filter { product ->
+                    val orig = product.price.toDoubleOrNull() ?: 0.0
+                    val final = product.finalPrice.toDoubleOrNull() ?: orig
+                    orig > final && orig > 0
+                }
+                .sortedByDescending { product ->
+                    val orig = product.price.toDoubleOrNull() ?: 1.0
+                    val final = product.finalPrice.toDoubleOrNull() ?: orig
+                    (orig - final) / orig
+                }
+                .take(6)
+                .ifEmpty { productsList.take(6) }
         }
     }
 
-    // 🌟 Randomize "Suggested For You" separately (Max 5 products with fresh selection each time)
-    val suggestedForYouProducts = remember(productsList) {
+    // 🌟 Suggested For You: Featured products from catalogue
+    val suggestedForYouProducts = remember(productsList, flashSaleProducts) {
         if (productsList.isEmpty()) emptyList()
-        else productsList.shuffled().take(5)
+        else {
+            val flashSaleIds = flashSaleProducts.map { it.productId }.toSet()
+            val remaining = productsList.filter { it.productId !in flashSaleIds }
+            if (remaining.isNotEmpty()) remaining.take(6) else productsList.take(6)
+        }
     }
 
 
