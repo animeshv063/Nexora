@@ -29,6 +29,7 @@ fun CustomTextField(
     modifier: Modifier = Modifier,
     singleLine: Boolean = true,
     leadingIcon: ImageVector? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     readOnly: Boolean = false
@@ -43,6 +44,7 @@ fun CustomTextField(
         leadingIcon = leadingIcon?.let { icon ->
             { Icon(imageVector = icon, contentDescription = null, tint = TextMuted) }
         },
+        trailingIcon = trailingIcon,
         visualTransformation = visualTransformation,
         keyboardOptions = keyboardOptions,
         shape = RoundedCornerShape(12.dp),

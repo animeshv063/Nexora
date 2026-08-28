@@ -44,6 +44,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -94,20 +95,20 @@ fun ProfileScreen(
     val deleteAccountState by viewModel.deleteAccountState.collectAsState()
     val userOrdersState by viewModel.userOrdersState.collectAsState()
 
-    var isEditing by remember { mutableStateOf(false) }
-    var showLogoutDialog by remember { mutableStateOf(false) }
-    var showDeleteAccountDialog by remember { mutableStateOf(false) }
-    var showOrdersDialog by remember { mutableStateOf(false) }
-    var showResetOrdersConfirm by remember { mutableStateOf(false) }
+    var isEditing by rememberSaveable { mutableStateOf(false) }
+    var showLogoutDialog by rememberSaveable { mutableStateOf(false) }
+    var showDeleteAccountDialog by rememberSaveable { mutableStateOf(false) }
+    var showOrdersDialog by rememberSaveable { mutableStateOf(false) }
+    var showResetOrdersConfirm by rememberSaveable { mutableStateOf(false) }
 
     var selectedBitmapForCrop by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
 
     // Form fields
-    var firstName by remember { mutableStateOf("") }
-    var lastName by remember { mutableStateOf("") }
-    var phone by remember { mutableStateOf("") }
-    var address by remember { mutableStateOf("") }
-    var profileImage by remember { mutableStateOf("") }
+    var firstName by rememberSaveable { mutableStateOf("") }
+    var lastName by rememberSaveable { mutableStateOf("") }
+    var phone by rememberSaveable { mutableStateOf("") }
+    var address by rememberSaveable { mutableStateOf("") }
+    var profileImage by rememberSaveable { mutableStateOf("") }
 
     LaunchedEffect(currentUser?.uid) {
         currentUser?.uid?.let { uid ->

@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -26,6 +27,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -37,6 +39,8 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedButton
@@ -68,6 +72,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,9 +80,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -118,12 +127,14 @@ fun AdminDashboardScreen(
     val bannerState by viewModel.bannerState.collectAsState()
     val adminActionState by viewModel.adminActionState.collectAsState()
 
-    var isAuthenticated by remember { mutableStateOf(false) }
-    var isVerifyingOwner by remember { mutableStateOf(false) }
-    var ownerUsername by remember { mutableStateOf("") }
-    var ownerPassword by remember { mutableStateOf("") }
+    var isAuthenticated by rememberSaveable { mutableStateOf(false) }
+    var isVerifyingOwner by rememberSaveable { mutableStateOf(false) }
+    var isPasswordVisible by rememberSaveable { mutableStateOf(false) }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    var ownerUsername by rememberSaveable { mutableStateOf("") }
+    var ownerPassword by rememberSaveable { mutableStateOf("") }
 
-    var selectedTab by remember { mutableIntStateOf(0) }
+    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
 
     val productsList = productsState.data ?: emptyList()
     val categoriesList = categoriesState.data?.filterNotNull() ?: emptyList()
@@ -152,57 +163,57 @@ fun AdminDashboardScreen(
     // ==========================================
     // Product Form States
     // ==========================================
-    var prodName by remember { mutableStateOf("") }
-    var prodCategory by remember { mutableStateOf("Shirts") }
-    var isCategoryDropdownExpanded by remember { mutableStateOf(false) }
-    var prodGender by remember { mutableStateOf("Men") }
-    var isGenderDropdownExpanded by remember { mutableStateOf(false) }
-    var prodPrice by remember { mutableStateOf("") }
-    var prodFinalPrice by remember { mutableStateOf("") }
-    var prodAvailableUnits by remember { mutableStateOf("30") }
-    var prodInitialUnits by remember { mutableStateOf("30") }
-    var prodCreateBy by remember { mutableStateOf("Animesh") }
-    var prodImage by remember { mutableStateOf("") }
-    var prodDescription by remember { mutableStateOf("") }
+    var prodName by rememberSaveable { mutableStateOf("") }
+    var prodCategory by rememberSaveable { mutableStateOf("Shirts") }
+    var isCategoryDropdownExpanded by rememberSaveable { mutableStateOf(false) }
+    var prodGender by rememberSaveable { mutableStateOf("Men") }
+    var isGenderDropdownExpanded by rememberSaveable { mutableStateOf(false) }
+    var prodPrice by rememberSaveable { mutableStateOf("") }
+    var prodFinalPrice by rememberSaveable { mutableStateOf("") }
+    var prodAvailableUnits by rememberSaveable { mutableStateOf("30") }
+    var prodInitialUnits by rememberSaveable { mutableStateOf("30") }
+    var prodCreateBy by rememberSaveable { mutableStateOf("Animesh") }
+    var prodImage by rememberSaveable { mutableStateOf("") }
+    var prodDescription by rememberSaveable { mutableStateOf("") }
 
     // Feedback Alert Dialogs
-    var actionDialogTitle by remember { mutableStateOf<String?>(null) }
-    var actionDialogMessage by remember { mutableStateOf<String?>(null) }
-    var isSuccessDialog by remember { mutableStateOf(false) }
-    var duplicateWarningMessage by remember { mutableStateOf<String?>(null) }
+    var actionDialogTitle by rememberSaveable { mutableStateOf<String?>(null) }
+    var actionDialogMessage by rememberSaveable { mutableStateOf<String?>(null) }
+    var isSuccessDialog by rememberSaveable { mutableStateOf(false) }
+    var duplicateWarningMessage by rememberSaveable { mutableStateOf<String?>(null) }
 
     // Edit Product Dialog State
     var editingProduct by remember { mutableStateOf<ProductDataModels?>(null) }
-    var editName by remember { mutableStateOf("") }
-    var editCategory by remember { mutableStateOf("Shirts") }
-    var editCategoryExpanded by remember { mutableStateOf(false) }
-    var editGender by remember { mutableStateOf("Men") }
-    var editGenderExpanded by remember { mutableStateOf(false) }
-    var editPrice by remember { mutableStateOf("") }
-    var editFinalPrice by remember { mutableStateOf("") }
-    var editUnits by remember { mutableStateOf("") }
-    var editImage by remember { mutableStateOf("") }
-    var editDescription by remember { mutableStateOf("") }
-    var deletingProductId by remember { mutableStateOf<String?>(null) }
-    var manageSearchQuery by remember { mutableStateOf("") }
+    var editName by rememberSaveable { mutableStateOf("") }
+    var editCategory by rememberSaveable { mutableStateOf("Shirts") }
+    var editCategoryExpanded by rememberSaveable { mutableStateOf(false) }
+    var editGender by rememberSaveable { mutableStateOf("Men") }
+    var editGenderExpanded by rememberSaveable { mutableStateOf(false) }
+    var editPrice by rememberSaveable { mutableStateOf("") }
+    var editFinalPrice by rememberSaveable { mutableStateOf("") }
+    var editUnits by rememberSaveable { mutableStateOf("") }
+    var editImage by rememberSaveable { mutableStateOf("") }
+    var editDescription by rememberSaveable { mutableStateOf("") }
+    var deletingProductId by rememberSaveable { mutableStateOf<String?>(null) }
+    var manageSearchQuery by rememberSaveable { mutableStateOf("") }
 
     // ==========================================
     // Category Form & Edit States
     // ==========================================
-    var newCatName by remember { mutableStateOf("") }
-    var newCatImage by remember { mutableStateOf("") }
-    var newCatCreateBy by remember { mutableStateOf("Animesh") }
+    var newCatName by rememberSaveable { mutableStateOf("") }
+    var newCatImage by rememberSaveable { mutableStateOf("") }
+    var newCatCreateBy by rememberSaveable { mutableStateOf("Animesh") }
 
     var editingCategory by remember { mutableStateOf<CategoryDataModels?>(null) }
 
     // ==========================================
     // Crop & Precision Zoom States
     // ==========================================
-    var cropTarget by remember { mutableStateOf<String?>(null) }
-    var cropImageUrl by remember { mutableStateOf("") }
+    var cropTarget by rememberSaveable { mutableStateOf<String?>(null) }
+    var cropImageUrl by rememberSaveable { mutableStateOf("") }
     var cropBitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
     var cropDialogRatio by remember { mutableStateOf(CropAspectRatio.SQUARE_1_1) }
-    var cropDialogTitle by remember { mutableStateOf("Crop & Precision Zoom") }
+    var cropDialogTitle by rememberSaveable { mutableStateOf("Crop & Precision Zoom") }
 
     val galleryCropLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -215,19 +226,19 @@ fun AdminDashboardScreen(
             }
         }
     }
-    var editCatName by remember { mutableStateOf("") }
-    var editCatImage by remember { mutableStateOf("") }
-    var editCatCreateBy by remember { mutableStateOf("Animesh") }
+    var editCatName by rememberSaveable { mutableStateOf("") }
+    var editCatImage by rememberSaveable { mutableStateOf("") }
+    var editCatCreateBy by rememberSaveable { mutableStateOf("Animesh") }
 
     // ==========================================
     // Banner Form & Edit States
     // ==========================================
-    var newBanName by remember { mutableStateOf("") }
-    var newBanImage by remember { mutableStateOf("") }
+    var newBanName by rememberSaveable { mutableStateOf("") }
+    var newBanImage by rememberSaveable { mutableStateOf("") }
 
     var editingBanner by remember { mutableStateOf<BannerDataModels?>(null) }
-    var editBanName by remember { mutableStateOf("") }
-    var editBanImage by remember { mutableStateOf("") }
+    var editBanName by rememberSaveable { mutableStateOf("") }
+    var editBanImage by rememberSaveable { mutableStateOf("") }
     var deletingBanner by remember { mutableStateOf<BannerDataModels?>(null) }
 
     LaunchedEffect(Unit) {
@@ -244,14 +255,16 @@ fun AdminDashboardScreen(
     val safeBottom: Dp = if (isThreeButton) navBarsBottom + 16.dp else navBarsBottom + 8.dp
 
     if (!isAuthenticated) {
+        val loginScrollState = rememberScrollState()
         // Secure Owner Login Gate
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(DarkBg)
                 .padding(top = safeTop, bottom = safeBottom)
+                .imePadding()
                 .padding(horizontal = 24.dp)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(loginScrollState),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -303,6 +316,10 @@ fun AdminDashboardScreen(
                         label = { Text("Owner ID") },
                         placeholder = { Text("Enter your Owner ID", color = TextMuted) },
                         singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Text,
+                            imeAction = ImeAction.Next
+                        ),
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = TextWhite,
@@ -322,8 +339,28 @@ fun AdminDashboardScreen(
                         label = { Text("Owner Password") },
                         placeholder = { Text("Enter your Password", color = TextMuted) },
                         singleLine = true,
-                        visualTransformation = PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = if (isPasswordVisible) KeyboardType.Text else KeyboardType.Password,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                keyboardController?.hide()
+                            }
+                        ),
+                        trailingIcon = {
+                            IconButton(
+                                onClick = { isPasswordVisible = !isPasswordVisible },
+                                modifier = Modifier.size(40.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (isPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                    contentDescription = if (isPasswordVisible) "Hide Password" else "Show Password",
+                                    tint = if (isPasswordVisible) OrangePrimary else TextMuted
+                                )
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = TextWhite,
@@ -867,6 +904,9 @@ fun AdminDashboardScreen(
                                 )
                             } else {
                                 Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 20.dp),
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.Center
                                 ) {
@@ -874,11 +914,24 @@ fun AdminDashboardScreen(
                                         imageVector = Icons.Default.ShoppingCart,
                                         contentDescription = null,
                                         tint = OrangePrimary.copy(alpha = 0.7f),
-                                        modifier = Modifier.size(40.dp)
+                                        modifier = Modifier.size(36.dp)
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
-                                    Text(text = "Live Product Image Preview", color = TextWhite, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                                    Text(text = "Enter or paste any product image URL above to preview", color = TextMuted, fontSize = 11.sp)
+                                    Text(
+                                        text = "Live Product Image Preview",
+                                        color = TextWhite,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 13.sp,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "Enter or paste any product image URL above to preview",
+                                        color = TextMuted,
+                                        fontSize = 11.sp,
+                                        textAlign = TextAlign.Center,
+                                        lineHeight = 16.sp
+                                    )
                                 }
                             }
                         }
@@ -1221,36 +1274,46 @@ fun AdminDashboardScreen(
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     Surface(
                                         shape = RoundedCornerShape(6.dp),
                                         color = DarkInputBg,
                                         border = BorderStroke(1.dp, OrangePrimary.copy(alpha = 0.6f)),
-                                        modifier = Modifier.clickable {
-                                            newCatImage = "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=500&q=80"
-                                        }
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clickable {
+                                                newCatImage = "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=500&q=80"
+                                            }
                                     ) {
                                         Text(
                                             text = "💡 Sample Shoe",
                                             fontSize = 11.sp,
                                             color = OrangePrimary,
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 6.dp, vertical = 6.dp)
                                         )
                                     }
                                     Surface(
                                         shape = RoundedCornerShape(6.dp),
                                         color = DarkInputBg,
                                         border = BorderStroke(1.dp, OrangePrimary.copy(alpha = 0.6f)),
-                                        modifier = Modifier.clickable {
-                                            newCatImage = "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=500&q=80"
-                                        }
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clickable {
+                                                newCatImage = "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=500&q=80"
+                                            }
                                     ) {
                                         Text(
                                             text = "💡 Sample Shirt",
                                             fontSize = 11.sp,
                                             color = OrangePrimary,
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 6.dp, vertical = 6.dp)
                                         )
                                     }
                                 }
@@ -1445,7 +1508,7 @@ fun AdminDashboardScreen(
                                             shape = RoundedCornerShape(8.dp),
                                             colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)
                                         ) {
-                                            Text(text = "??? Adjust Crop & Zoom (16:9)", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = com.example.shopping.ui.theme.ButtonTextColor)
+                                            Text(text = "✂️ Crop (16:9)", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = com.example.shopping.ui.theme.ButtonTextColor)
                                         }
                                         OutlinedButton(
                                             onClick = {
@@ -1459,7 +1522,7 @@ fun AdminDashboardScreen(
                                             border = BorderStroke(1.dp, DarkInputBorder),
                                             colors = ButtonDefaults.outlinedButtonColors(contentColor = TextWhite)
                                         ) {
-                                            Text(text = "?? Pick & Crop", fontSize = 11.sp, color = TextWhite)
+                                            Text(text = "🖼️ Pick & Crop", fontSize = 11.sp, color = TextWhite)
                                         }
                                     }
                                 }
@@ -1467,36 +1530,46 @@ fun AdminDashboardScreen(
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     Surface(
                                         shape = RoundedCornerShape(6.dp),
                                         color = DarkInputBg,
                                         border = BorderStroke(1.dp, OrangePrimary.copy(alpha = 0.6f)),
-                                        modifier = Modifier.clickable {
-                                            newBanImage = "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&q=80"
-                                        }
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clickable {
+                                                newBanImage = "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&q=80"
+                                            }
                                     ) {
                                         Text(
-                                            text = "💡 Sample Store Banner",
+                                            text = "💡 Sample Store",
                                             fontSize = 11.sp,
                                             color = OrangePrimary,
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 6.dp, vertical = 6.dp)
                                         )
                                     }
                                     Surface(
                                         shape = RoundedCornerShape(6.dp),
                                         color = DarkInputBg,
                                         border = BorderStroke(1.dp, OrangePrimary.copy(alpha = 0.6f)),
-                                        modifier = Modifier.clickable {
-                                            newBanImage = "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1200&q=80"
-                                        }
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clickable {
+                                                newBanImage = "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1200&q=80"
+                                            }
                                     ) {
                                         Text(
-                                            text = "💡 Sample Fashion Banner",
+                                            text = "💡 Sample Fashion",
                                             fontSize = 11.sp,
                                             color = OrangePrimary,
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 6.dp, vertical = 6.dp)
                                         )
                                     }
                                 }
@@ -1526,6 +1599,9 @@ fun AdminDashboardScreen(
                                 )
                             } else {
                                 Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 20.dp),
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.Center
                                 ) {
@@ -1533,11 +1609,24 @@ fun AdminDashboardScreen(
                                         imageVector = Icons.Default.Star,
                                         contentDescription = null,
                                         tint = OrangePrimary.copy(alpha = 0.7f),
-                                        modifier = Modifier.size(40.dp)
+                                        modifier = Modifier.size(36.dp)
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
-                                    Text(text = "Live Banner Preview", color = TextWhite, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                                    Text(text = "Enter or paste any banner image URL above to preview in real-time", color = TextMuted, fontSize = 11.sp)
+                                    Text(
+                                        text = "Live Banner Preview",
+                                        color = TextWhite,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 13.sp,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "Enter or paste any banner image URL above to preview in real-time",
+                                        color = TextMuted,
+                                        fontSize = 11.sp,
+                                        textAlign = TextAlign.Center,
+                                        lineHeight = 16.sp
+                                    )
                                 }
                             }
                         }

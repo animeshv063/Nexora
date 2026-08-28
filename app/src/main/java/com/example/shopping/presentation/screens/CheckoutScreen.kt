@@ -60,8 +60,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -108,20 +107,20 @@ fun CheckoutScreen(
     val userProfileState by viewModel.userProfileState.collectAsState()
     val placeOrderState by viewModel.placeOrderState.collectAsState()
 
-    var selectedPaymentMethod by remember { mutableStateOf("Razorpay") }
+    var selectedPaymentMethod by rememberSaveable { mutableStateOf("Razorpay") }
 
     // Delivery Address States
-    var recipientName by remember { mutableStateOf("") }
-    var recipientPhone by remember { mutableStateOf("") }
-    var deliveryAddress by remember { mutableStateOf("") }
-    var isFetchingLocation by remember { mutableStateOf(false) }
-    var showAddressDialog by remember { mutableStateOf(false) }
+    var recipientName by rememberSaveable { mutableStateOf("") }
+    var recipientPhone by rememberSaveable { mutableStateOf("") }
+    var deliveryAddress by rememberSaveable { mutableStateOf("") }
+    var isFetchingLocation by rememberSaveable { mutableStateOf(false) }
+    var showAddressDialog by rememberSaveable { mutableStateOf(false) }
 
     // Dialog temporary edit states
-    var tempName by remember { mutableStateOf("") }
-    var tempPhone by remember { mutableStateOf("") }
-    var tempAddress by remember { mutableStateOf("") }
-    var showOrderConfirmDialog by remember { mutableStateOf(false) }
+    var tempName by rememberSaveable { mutableStateOf("") }
+    var tempPhone by rememberSaveable { mutableStateOf("") }
+    var tempAddress by rememberSaveable { mutableStateOf("") }
+    var showOrderConfirmDialog by rememberSaveable { mutableStateOf(false) }
 
     val product = productDetailState.data ?: ProductDataModels(
         name = "Fashion Product",
