@@ -1349,7 +1349,7 @@ fun AdminDashboardScreen(
                                 }
 
                                 // Immediate client-side duplicate check
-                                val alreadyExists = categories.any { it.name.trim().equals(name, ignoreCase = true) }
+                                val alreadyExists = categoriesList.any { it.name.trim().equals(name, ignoreCase = true) }
                                 if (alreadyExists) {
                                     Toast.makeText(context, "⚠️ A category named '$name' already exists!", Toast.LENGTH_SHORT).show()
                                     return@Button
