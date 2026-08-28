@@ -11,6 +11,7 @@ data class ProductDataModels(
     val price : String = "",
     val finalPrice : String = "",
     val category : String = "",
+    val gender : String = "Men",
     val image : String = "",
     val date : Long = System.currentTimeMillis(),
     val createBy : String = "",

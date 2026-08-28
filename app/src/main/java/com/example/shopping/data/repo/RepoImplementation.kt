@@ -196,6 +196,7 @@ class RepoImplementation @Inject constructor(
             }.ifEmpty { price }
 
             val category = document.getString("category") ?: ""
+            val gender = document.getString("gender") ?: "Men"
             val image = document.getString("image") ?: ""
             val createBy = document.getString("createBy") ?: ""
             val dateVal = document.get("date")
@@ -246,6 +247,7 @@ class RepoImplementation @Inject constructor(
                 price = price,
                 finalPrice = finalPrice,
                 category = category,
+                gender = gender,
                 image = image,
                 date = date,
                 createBy = createBy,
@@ -839,6 +841,7 @@ class RepoImplementation @Inject constructor(
             "price" to product.price,
             "finalPrice" to product.finalPrice.ifEmpty { product.price },
             "category" to product.category,
+            "gender" to product.gender.ifEmpty { "Men" },
             "image" to product.image,
             "date" to (if (product.date > 0) product.date else System.currentTimeMillis()),
             "createBy" to product.createBy.ifEmpty { "Animesh" },
@@ -872,6 +875,7 @@ class RepoImplementation @Inject constructor(
                 "price" to product.price,
                 "finalPrice" to product.finalPrice.ifEmpty { product.price },
                 "category" to product.category,
+                "gender" to product.gender.ifEmpty { "Men" },
                 "image" to product.image,
                 "date" to (if (product.date > 0) product.date else System.currentTimeMillis()),
                 "createBy" to product.createBy.ifEmpty { "Animesh" },

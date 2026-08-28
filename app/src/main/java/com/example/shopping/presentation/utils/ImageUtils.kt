@@ -49,9 +49,9 @@ fun sanitizeImageUrl(rawUrl: String): String {
     var url = rawUrl.trim()
     if (url.isEmpty()) return ""
 
-    // Preserve base64 data URIs
+    // Preserve base64 data URIs - remove line breaks, carriage returns or extra spaces
     if (url.startsWith("data:image", ignoreCase = true)) {
-        return url
+        return url.replace("\n", "").replace("\r", "").replace(" ", "")
     }
 
     url = url.removeSurrounding("\"", "\"")
@@ -59,10 +59,10 @@ fun sanitizeImageUrl(rawUrl: String): String {
         .removeSurrounding("<", ">")
         .removeSurrounding("(", ")")
         .removeSurrounding("[", "]")
-        .trim('"', '\'', '<', '>', ',', ';', ' ')
+        .trim('"', '\'', '<', '>', ',', ';', ' ', '\n', '\r')
 
     // Handle Google image search imgurl parameter if present
-    if (url.contains("imgurl=", ignoreCase = true)) {
+    if (url.contains("imgurl=", ignoreCase = true) || url.contains("&imgurl=", ignoreCase = true)) {
         try {
             val uri = Uri.parse(url)
             val extracted = uri.getQueryParameter("imgurl") ?: uri.getQueryParameter("url")
@@ -74,11 +74,22 @@ fun sanitizeImageUrl(rawUrl: String): String {
         }
     }
 
+    // Handle Google search image redirects
+    if (url.contains("google.com/imgres", ignoreCase = true)) {
+        try {
+            val uri = Uri.parse(url)
+            val extracted = uri.getQueryParameter("imgurl") ?: uri.getQueryParameter("url")
+            if (!extracted.isNullOrBlank()) {
+                return URLDecoder.decode(extracted, StandardCharsets.UTF_8.name()).trim()
+            }
+        } catch (e: Exception) {}
+    }
+
     // Handle Google Drive links
     if (url.contains("drive.google.com/file/d/", ignoreCase = true)) {
         val fileId = url.substringAfter("file/d/").substringBefore("/").substringBefore("?")
         if (fileId.isNotBlank()) {
-            return "https://lh3.googleusercontent.com/d/"
+            return "https://lh3.googleusercontent.com/d/$fileId"
         }
     }
 
@@ -90,6 +101,25 @@ fun sanitizeImageUrl(rawUrl: String): String {
     // Handle GitHub blob links
     if (url.contains("github.com", ignoreCase = true) && url.contains("/blob/")) {
         return url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
+    }
+
+    // Handle Unsplash web links vs raw photo links
+    if (url.contains("unsplash.com", ignoreCase = true)) {
+        if (url.contains("unsplash.com/photos/", ignoreCase = true) && !url.contains("images.unsplash.com")) {
+            val photoId = url.substringAfter("photos/").substringBefore("?").substringBefore("/")
+            if (photoId.isNotBlank()) {
+                return "https://images.unsplash.com/photo-$photoId?w=1000&q=80"
+            }
+        }
+        // Normalize heavy Unsplash parameters (like w=3000 down to w=1000 for mobile memory safety)
+        if (url.contains("w=") && (url.contains("plus.unsplash.com") || url.contains("images.unsplash.com"))) {
+            url = url.replace(Regex("w=\\d+"), "w=1000")
+        }
+    }
+
+    // Handle Pinterest direct image link if web page was copied
+    if (url.contains("pinimg.com", ignoreCase = true) && url.startsWith("http")) {
+        return url
     }
 
     return url

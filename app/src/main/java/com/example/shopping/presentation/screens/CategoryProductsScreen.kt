@@ -1,6 +1,8 @@
 package com.example.shopping.presentation.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
@@ -18,6 +20,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -30,6 +34,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -63,13 +68,27 @@ fun CategoryProductsScreen(
 ) {
     val categoryProductsState by viewModel.categoryProductsState.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
+    var selectedGender by remember { mutableStateOf("All") }
+
+    val genderOptions = listOf("All", "Men", "Women", "Unisex")
 
     LaunchedEffect(categoryName) {
         viewModel.fetchProductsByCategory(categoryName)
     }
 
     val products = categoryProductsState.data ?: emptyList()
-    val filteredProducts = products.filter { it.name.contains(searchQuery, ignoreCase = true) }
+    val filteredProducts = products.filter { product ->
+        val matchesSearch = product.name.contains(searchQuery, ignoreCase = true) ||
+                product.description.contains(searchQuery, ignoreCase = true)
+        val matchesGender = when (selectedGender) {
+            "All" -> true
+            "Men" -> product.gender.equals("Men", ignoreCase = true) || product.gender.equals("Unisex", ignoreCase = true) || product.gender.isBlank()
+            "Women" -> product.gender.equals("Women", ignoreCase = true) || product.gender.equals("Unisex", ignoreCase = true)
+            "Unisex" -> product.gender.equals("Unisex", ignoreCase = true)
+            else -> true
+        }
+        matchesSearch && matchesGender
+    }
 
 
     val statusBarsTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
@@ -103,14 +122,14 @@ fun CategoryProductsScreen(
             )
         }
 
-        // Search Bar matching screenshot
+        // Search Bar
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
-            placeholder = { Text("Search", color = TextMuted, fontSize = 14.sp) },
+            placeholder = { Text("Search $categoryName", color = TextMuted, fontSize = 14.sp) },
             leadingIcon = {
                 Icon(imageVector = Icons.Default.Search, contentDescription = "Search", tint = TextMuted)
             },
@@ -126,7 +145,43 @@ fun CategoryProductsScreen(
             )
         )
 
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Gender Filter Chips (All | 👨 Men | 👩 Women | ✨ Unisex)
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(genderOptions) { gender ->
+                val isSelected = selectedGender == gender
+                val label = when (gender) {
+                    "All" -> "All"
+                    "Men" -> "👨 Men"
+                    "Women" -> "👩 Women"
+                    "Unisex" -> "✨ Unisex"
+                    else -> gender
+                }
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = if (isSelected) OrangePrimary else DarkInputBg,
+                    border = BorderStroke(
+                        1.dp,
+                        if (isSelected) OrangePrimary else DarkInputBorder
+                    ),
+                    modifier = Modifier.clickable { selectedGender = gender }
+                ) {
+                    Text(
+                        text = label,
+                        color = if (isSelected) Color.Black else TextWhite,
+                        fontSize = 13.sp,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
 
         if (filteredProducts.isEmpty()) {
             Box(
@@ -135,12 +190,20 @@ fun CategoryProductsScreen(
                     .padding(32.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "Nothing to display",
-                    color = TextMuted,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium
-                )
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "No products found",
+                        color = TextWhite,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Try switching between All / Men / Women filter",
+                        color = TextMuted,
+                        fontSize = 13.sp
+                    )
+                }
             }
         } else {
             LazyVerticalGrid(

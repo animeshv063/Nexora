@@ -130,13 +130,19 @@ fun HomeScreen(
                 .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(id = com.example.shopping.R.drawable.app_logo),
-                contentDescription = "Nexora Logo",
-                modifier = Modifier
-                    .size(38.dp)
-                    .clip(CircleShape)
-            )
+            Surface(
+                shape = CircleShape,
+                color = Color.White,
+                modifier = Modifier.size(38.dp)
+            ) {
+                Image(
+                    painter = painterResource(id = com.example.shopping.R.drawable.app_logo_mark),
+                    contentDescription = "Nexora Logo",
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(4.dp)
+                )
+            }
             Spacer(modifier = Modifier.width(10.dp))
             Column {
                 Text(

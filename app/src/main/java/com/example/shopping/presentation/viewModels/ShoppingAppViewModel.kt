@@ -149,6 +149,10 @@ class ShoppingAppViewModel @Inject constructor(
         }
     }
 
+    fun resetSignUpState() {
+        _signUpState.value = ResponseState()
+    }
+
     fun login(userData: UserData) {
         viewModelScope.launch {
             loginUserUseCase.loginUser(userData).collectLatest { result ->

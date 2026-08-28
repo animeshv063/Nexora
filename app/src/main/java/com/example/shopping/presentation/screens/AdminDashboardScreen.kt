@@ -143,12 +143,20 @@ fun AdminDashboardScreen(
         "Accessories"
     )
 
+    val predefinedGenders = listOf(
+        "Men",
+        "Women",
+        "Unisex"
+    )
+
     // ==========================================
     // Product Form States
     // ==========================================
     var prodName by remember { mutableStateOf("") }
     var prodCategory by remember { mutableStateOf("Shirts") }
     var isCategoryDropdownExpanded by remember { mutableStateOf(false) }
+    var prodGender by remember { mutableStateOf("Men") }
+    var isGenderDropdownExpanded by remember { mutableStateOf(false) }
     var prodPrice by remember { mutableStateOf("") }
     var prodFinalPrice by remember { mutableStateOf("") }
     var prodAvailableUnits by remember { mutableStateOf("30") }
@@ -168,6 +176,8 @@ fun AdminDashboardScreen(
     var editName by remember { mutableStateOf("") }
     var editCategory by remember { mutableStateOf("Shirts") }
     var editCategoryExpanded by remember { mutableStateOf(false) }
+    var editGender by remember { mutableStateOf("Men") }
+    var editGenderExpanded by remember { mutableStateOf(false) }
     var editPrice by remember { mutableStateOf("") }
     var editFinalPrice by remember { mutableStateOf("") }
     var editUnits by remember { mutableStateOf("") }
@@ -615,6 +625,69 @@ fun AdminDashboardScreen(
                                 }
                                 HorizontalDivider(color = DarkInputBorder.copy(alpha = 0.5f), modifier = Modifier.padding(vertical = 8.dp))
 
+                                // Gender Dropdown (Men / Women / Unisex)
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "gender",
+                                        color = OrangePrimary,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        modifier = Modifier.width(110.dp)
+                                    )
+
+                                    ExposedDropdownMenuBox(
+                                        expanded = isGenderDropdownExpanded,
+                                        onExpandedChange = { isGenderDropdownExpanded = !isGenderDropdownExpanded },
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        OutlinedTextField(
+                                            value = prodGender,
+                                            onValueChange = {},
+                                            readOnly = true,
+                                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isGenderDropdownExpanded) },
+                                            modifier = Modifier.menuAnchor().fillMaxWidth(),
+                                            colors = OutlinedTextFieldDefaults.colors(
+                                                focusedTextColor = TextWhite,
+                                                unfocusedTextColor = TextWhite,
+                                                focusedBorderColor = OrangePrimary,
+                                                unfocusedBorderColor = DarkInputBorder,
+                                                focusedContainerColor = DarkInputBg,
+                                                unfocusedContainerColor = DarkInputBg
+                                            )
+                                        )
+
+                                        ExposedDropdownMenu(
+                                            expanded = isGenderDropdownExpanded,
+                                            onDismissRequest = { isGenderDropdownExpanded = false },
+                                            modifier = Modifier.background(DarkCard)
+                                        ) {
+                                            predefinedGenders.forEach { gen ->
+                                                DropdownMenuItem(
+                                                    text = {
+                                                        Text(
+                                                            text = when (gen) {
+                                                                "Men" -> "👨 Men / Male"
+                                                                "Women" -> "👩 Women / Female"
+                                                                else -> "✨ Unisex"
+                                                            },
+                                                            color = TextWhite,
+                                                            fontSize = 14.sp
+                                                        )
+                                                    },
+                                                    onClick = {
+                                                        prodGender = gen
+                                                        isGenderDropdownExpanded = false
+                                                    }
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                                HorizontalDivider(color = DarkInputBorder.copy(alpha = 0.5f), modifier = Modifier.padding(vertical = 8.dp))
+
                                 KeyValRow(key = "name", value = prodName, placeholder = "e.g. Classic Oxford Cotton Shirt", onValueChange = { prodName = it })
                                 HorizontalDivider(color = DarkInputBorder.copy(alpha = 0.5f), modifier = Modifier.padding(vertical = 8.dp))
 
@@ -841,6 +914,7 @@ fun AdminDashboardScreen(
                                     price = price,
                                     finalPrice = finalPrice,
                                     category = prodCategory,
+                                    gender = prodGender,
                                     image = image,
                                     description = desc,
                                     availableUnits = available,
@@ -976,11 +1050,36 @@ fun AdminDashboardScreen(
                                                     fontSize = 14.sp,
                                                     maxLines = 1
                                                 )
-                                                Text(
-                                                    text = "Category: ${product.category}",
-                                                    color = TextMuted,
-                                                    fontSize = 12.sp
-                                                )
+                                                Spacer(modifier = Modifier.height(2.dp))
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                                ) {
+                                                    Text(
+                                                        text = product.category,
+                                                        color = TextMuted,
+                                                        fontSize = 12.sp,
+                                                        maxLines = 1
+                                                    )
+                                                    Surface(
+                                                        shape = RoundedCornerShape(4.dp),
+                                                        color = OrangePrimary.copy(alpha = 0.15f)
+                                                    ) {
+                                                        Text(
+                                                            text = when (product.gender) {
+                                                                "Women" -> "👩 Women"
+                                                                "Unisex" -> "✨ Unisex"
+                                                                else -> "👨 Men"
+                                                            },
+                                                            color = OrangePrimary,
+                                                            fontSize = 10.sp,
+                                                            fontWeight = FontWeight.SemiBold,
+                                                            maxLines = 1,
+                                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                        )
+                                                    }
+                                                }
+                                                Spacer(modifier = Modifier.height(2.dp))
                                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                                     Text(
                                                         text = "₹${product.finalPrice.ifEmpty { product.price }}",
@@ -997,25 +1096,30 @@ fun AdminDashboardScreen(
                                                 }
                                             }
 
-                                            IconButton(
-                                                onClick = {
-                                                    editingProduct = product
-                                                    editName = product.name
-                                                    editCategory = product.category
-                                                    editPrice = product.price
-                                                    editFinalPrice = product.finalPrice
-                                                    editUnits = product.availableUnits.toString()
-                                                    editImage = product.image
-                                                    editDescription = product.description
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                IconButton(
+                                                    onClick = {
+                                                        editingProduct = product
+                                                        editName = product.name
+                                                        editCategory = product.category
+                                                        editGender = product.gender.ifEmpty { "Men" }
+                                                        editPrice = product.price
+                                                        editFinalPrice = product.finalPrice
+                                                        editUnits = product.availableUnits.toString()
+                                                        editImage = product.image
+                                                        editDescription = product.description
+                                                    },
+                                                    modifier = Modifier.size(36.dp)
+                                                ) {
+                                                    Icon(Icons.Default.Edit, contentDescription = "Edit", tint = OrangePrimary, modifier = Modifier.size(20.dp))
                                                 }
-                                            ) {
-                                                Icon(Icons.Default.Edit, contentDescription = "Edit", tint = OrangePrimary)
-                                            }
 
-                                            IconButton(
-                                                onClick = { deletingProductId = product.productId }
-                                            ) {
-                                                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color(0xFFEF4444))
+                                                IconButton(
+                                                    onClick = { deletingProductId = product.productId },
+                                                    modifier = Modifier.size(36.dp)
+                                                ) {
+                                                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color(0xFFEF4444), modifier = Modifier.size(20.dp))
+                                                }
                                             }
                                         }
                                     }
@@ -1407,7 +1511,7 @@ fun AdminDashboardScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(140.dp)
+                                .aspectRatio(16f / 9f)
                                 .clip(RoundedCornerShape(10.dp))
                                 .background(DarkCardSecondary),
                             contentAlignment = Alignment.Center
@@ -1713,6 +1817,55 @@ fun AdminDashboardScreen(
                         }
                     }
 
+                    ExposedDropdownMenuBox(
+                        expanded = editGenderExpanded,
+                        onExpandedChange = { editGenderExpanded = !editGenderExpanded },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = editGender,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Gender") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = editGenderExpanded) },
+                            modifier = Modifier.menuAnchor().fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = TextWhite,
+                                unfocusedTextColor = TextWhite,
+                                focusedBorderColor = OrangePrimary,
+                                unfocusedBorderColor = DarkInputBorder,
+                                focusedContainerColor = DarkInputBg,
+                                unfocusedContainerColor = DarkInputBg
+                            )
+                        )
+
+                        ExposedDropdownMenu(
+                            expanded = editGenderExpanded,
+                            onDismissRequest = { editGenderExpanded = false },
+                            modifier = Modifier.background(DarkCard)
+                        ) {
+                            predefinedGenders.forEach { gen ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            text = when (gen) {
+                                                "Men" -> "👨 Men / Male"
+                                                "Women" -> "👩 Women / Female"
+                                                else -> "✨ Unisex"
+                                            },
+                                            color = TextWhite,
+                                            fontSize = 14.sp
+                                        )
+                                    },
+                                    onClick = {
+                                        editGender = gen
+                                        editGenderExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
                     OutlinedTextField(
                         value = editPrice,
                         onValueChange = { editPrice = it },
@@ -1846,6 +1999,7 @@ fun AdminDashboardScreen(
                         val updated = prod.copy(
                             name = editName.trim(),
                             category = editCategory.trim(),
+                            gender = editGender.trim().ifEmpty { "Men" },
                             price = editPrice.trim(),
                             finalPrice = editFinalPrice.trim(),
                             availableUnits = units,

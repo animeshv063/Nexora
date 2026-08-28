@@ -104,11 +104,15 @@ fun SignUpScreen(
         SuccessAlertDialog(
             onDismissRequest = {
                 showSuccessDialog = false
-                onSignUpSuccess()
+                viewModel.resetSignUpState()
+                com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
+                onNavigateToLogin()
             },
             onClick = {
                 showSuccessDialog = false
-                onSignUpSuccess()
+                viewModel.resetSignUpState()
+                com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
+                onNavigateToLogin()
             }
         )
     }

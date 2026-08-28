@@ -267,6 +267,24 @@ fun ProductDetailScreen(
                                 )
                             }
 
+                            // Gender Badge (Men / Women / Unisex)
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = Color(0xFF6366F1).copy(alpha = 0.15f)
+                            ) {
+                                Text(
+                                    text = when (product.gender) {
+                                        "Women" -> "👩 Women"
+                                        "Unisex" -> "✨ Unisex"
+                                        else -> "👨 Men"
+                                    },
+                                    color = Color(0xFFA5B4FC),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+
                             // Dynamic Rating Chip
                             val prodRating = remember(product.productId) { com.example.shopping.presentation.utils.RatingHelper.getRatingForProduct(product.productId) }
                             Surface(

@@ -97,8 +97,8 @@ fun Banner(banners: List<BannerDataModels>) {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(175.dp)
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 16.dp)
+                    .aspectRatio(16f / 9f),
                 shape = RoundedCornerShape(16.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                 colors = CardDefaults.cardColors(containerColor = DarkCardSecondary)

@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.example.shopping.presentation.navigation.App
 import com.example.shopping.ui.theme.ShoppingAppTheme
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.razorpay.PaymentResultListener
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -14,6 +15,7 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity(), PaymentResultListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         com.razorpay.Checkout.preload(applicationContext)
         enableEdgeToEdge()
