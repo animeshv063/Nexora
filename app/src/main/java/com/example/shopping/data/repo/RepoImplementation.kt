@@ -934,21 +934,46 @@ class RepoImplementation @Inject constructor(
             close()
             return@callbackFlow
         }
-        val docRef = if (category.categoryId.isNotBlank()) {
-            firebaseFirestore.collection("categories").document(category.categoryId)
-        } else {
-            firebaseFirestore.collection("categories").document()
+        val trimmedName = category.name.trim()
+        if (trimmedName.isEmpty()) {
+            trySend(ResultState.Error("Category name cannot be empty."))
+            close()
+            return@callbackFlow
         }
-        val categoryMap = hashMapOf(
-            "name" to category.name,
-            "categoryImage" to category.categoryImage,
-            "createBy" to category.createBy.ifEmpty { "Animesh" },
-            "date" to (if (category.date > 0) category.date else System.currentTimeMillis())
-        )
-        docRef.set(categoryMap).addOnSuccessListener {
-            trySend(ResultState.Success("Category Added Successfully! 📁"))
+
+        // Check if a category with the same name already exists (case-insensitive)
+        firebaseFirestore.collection("categories").get().addOnSuccessListener { snapshot ->
+            val duplicate = snapshot.documents.any { doc ->
+                val existingName = doc.getString("name")?.trim().orEmpty()
+                existingName.equals(trimmedName, ignoreCase = true)
+            }
+            if (duplicate) {
+                trySend(ResultState.Error("A category named '$trimmedName' already exists!"))
+                close()
+                return@addOnSuccessListener
+            }
+
+            val docRef = if (category.categoryId.isNotBlank()) {
+                firebaseFirestore.collection("categories").document(category.categoryId)
+            } else {
+                firebaseFirestore.collection("categories").document()
+            }
+            val categoryMap = hashMapOf(
+                "name" to trimmedName,
+                "categoryImage" to category.categoryImage,
+                "createBy" to category.createBy.ifEmpty { "Animesh" },
+                "date" to (if (category.date > 0) category.date else System.currentTimeMillis())
+            )
+            docRef.set(categoryMap).addOnSuccessListener {
+                trySend(ResultState.Success("Category Added Successfully! 📁"))
+                close()
+            }.addOnFailureListener { error ->
+                trySend(ResultState.Error(error.localizedMessage ?: "Failed to add category"))
+                close()
+            }
         }.addOnFailureListener { error ->
-            trySend(ResultState.Error(error.localizedMessage ?: "Failed to add category"))
+            trySend(ResultState.Error(error.localizedMessage ?: "Failed to check existing categories"))
+            close()
         }
         awaitClose {
             close()
