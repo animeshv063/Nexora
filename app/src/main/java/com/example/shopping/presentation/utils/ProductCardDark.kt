@@ -89,34 +89,6 @@ fun ProductCardDark(
                     }
                 }
 
-                // Dynamic Rating Badge
-                Surface(
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .align(Alignment.TopStart),
-                    shape = RoundedCornerShape(6.dp),
-                    color = Color.Black.copy(alpha = 0.65f)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Star,
-                            contentDescription = "Rating",
-                            tint = Color(0xFFFBBF24),
-                            modifier = Modifier.size(11.dp)
-                        )
-                        Spacer(modifier = Modifier.width(3.dp))
-                        Text(
-                            text = rating,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextWhite
-                        )
-                    }
-                }
-
                 // Discount Badge if discount exists
                 val orig = product.price.toDoubleOrNull() ?: 0.0
                 val fin = product.finalPrice.toDoubleOrNull() ?: 0.0
@@ -166,17 +138,51 @@ fun ProductCardDark(
                     .background(DarkCardSecondary)
                     .padding(horizontal = 12.dp, vertical = 10.dp)
             ) {
-                if (product.category.isNotEmpty()) {
+                // Category & Rating Row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
                     Text(
-                        text = product.category.uppercase(),
+                        text = if (product.category.isNotEmpty()) product.category.uppercase() else "GENERAL",
                         fontSize = 10.sp,
-                        fontWeight = FontWeight.Medium,
+                        fontWeight = FontWeight.SemiBold,
                         color = TextMuted,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
                     )
-                    Spacer(modifier = Modifier.height(2.dp))
+
+                    Spacer(modifier = Modifier.width(4.dp))
+
+                    // Rating chip
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = Color(0xFFFBBF24).copy(alpha = 0.15f)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Star,
+                                contentDescription = "Rating",
+                                tint = Color(0xFFFBBF24),
+                                modifier = Modifier.size(10.dp)
+                            )
+                            Spacer(modifier = Modifier.width(2.dp))
+                            Text(
+                                text = rating,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFFBBF24)
+                            )
+                        }
+                    }
                 }
+
+                Spacer(modifier = Modifier.height(3.dp))
 
                 Text(
                     text = product.name,

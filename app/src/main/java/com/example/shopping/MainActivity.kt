@@ -17,6 +17,7 @@ class MainActivity : ComponentActivity(), PaymentResultListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+        com.example.shopping.ui.theme.ThemeManager.init(this)
         com.razorpay.Checkout.preload(applicationContext)
         enableEdgeToEdge()
         setContent {

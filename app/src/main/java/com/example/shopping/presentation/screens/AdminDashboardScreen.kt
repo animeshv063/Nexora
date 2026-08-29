@@ -101,12 +101,14 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import com.example.shopping.presentation.utils.sanitizeImageUrl
 import com.example.shopping.presentation.viewModels.ShoppingAppViewModel
+import com.example.shopping.ui.theme.ButtonTextColor
 import com.example.shopping.ui.theme.DarkBg
 import com.example.shopping.ui.theme.DarkCard
 import com.example.shopping.ui.theme.DarkCardSecondary
 import com.example.shopping.ui.theme.DarkInputBg
 import com.example.shopping.ui.theme.DarkInputBorder
 import com.example.shopping.ui.theme.OrangePrimary
+import com.example.shopping.ui.theme.PrimaryAccent
 import com.example.shopping.ui.theme.SuccessGreen
 import com.example.shopping.ui.theme.TextMuted
 import com.example.shopping.ui.theme.TextWhite
@@ -420,9 +422,9 @@ fun AdminDashboardScreen(
                         colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)
                     ) {
                         if (isVerifyingOwner) {
-                            CircularProgressIndicator(color = Color(0xFF111111), modifier = Modifier.size(24.dp))
+                            CircularProgressIndicator(color = ButtonTextColor, modifier = Modifier.size(24.dp))
                         } else {
-                            Text(text = "Unlock Admin Console", fontWeight = FontWeight.ExtraBold, color = Color(0xFF111111), fontSize = 15.sp)
+                            Text(text = "Unlock Admin Console", fontWeight = FontWeight.ExtraBold, color = ButtonTextColor, fontSize = 15.sp)
                         }
                     }
                 }
@@ -1003,13 +1005,13 @@ fun AdminDashboardScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)
                         ) {
                             if (adminActionState.isLoading) {
-                                CircularProgressIndicator(color = Color(0xFF111111), modifier = Modifier.size(24.dp))
+                                CircularProgressIndicator(color = com.example.shopping.ui.theme.ButtonTextColor, modifier = Modifier.size(24.dp))
                             } else {
                                 Text(
                                     text = "Add Product to Firestore",
                                     fontWeight = FontWeight.ExtraBold,
                                     fontSize = 15.sp,
-                                    color = Color(0xFF111111)
+                                    color = com.example.shopping.ui.theme.ButtonTextColor
                                 )
                             }
                         }
@@ -1201,9 +1203,15 @@ fun AdminDashboardScreen(
                             color = TextWhite
                         )
                         Text(
-                            text = "Firestore Collection: categories (Admin: animeshv063@gmail.com)",
+                            text = "Firestore Collection: categories",
                             fontSize = 12.sp,
-                            color = OrangePrimary
+                            color = OrangePrimary,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "Admin: animeshv063@gmail.com",
+                            fontSize = 11.sp,
+                            color = TextMuted
                         )
 
                         Spacer(modifier = Modifier.height(12.dp))
@@ -1379,7 +1387,7 @@ fun AdminDashboardScreen(
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)
                         ) {
-                            Text("Add Category to Firestore", fontWeight = FontWeight.Bold, color = Color.Black, fontSize = 15.sp)
+                            Text("Add Category to Firestore", fontWeight = FontWeight.Bold, color = ButtonTextColor, fontSize = 15.sp)
                         }
 
                         Spacer(modifier = Modifier.height(20.dp))
@@ -1467,9 +1475,15 @@ fun AdminDashboardScreen(
                             color = TextWhite
                         )
                         Text(
-                            text = "Firestore Collection: banner (Admin: animeshv063@gmail.com)",
+                            text = "Firestore Collection: banner",
                             fontSize = 12.sp,
-                            color = OrangePrimary
+                            color = OrangePrimary,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "Admin: animeshv063@gmail.com",
+                            fontSize = 11.sp,
+                            color = TextMuted
                         )
 
                         Spacer(modifier = Modifier.height(12.dp))
@@ -1671,7 +1685,7 @@ fun AdminDashboardScreen(
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)
                         ) {
-                            Text("Add Banner to Firestore", fontWeight = FontWeight.Bold, color = Color.Black, fontSize = 15.sp)
+                            Text("Add Banner to Firestore", fontWeight = FontWeight.Bold, color = ButtonTextColor, fontSize = 15.sp)
                         }
 
                         Spacer(modifier = Modifier.height(20.dp))
@@ -1785,7 +1799,7 @@ fun AdminDashboardScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)
                 ) {
-                    Text("OK", color = Color.Black, fontWeight = FontWeight.Bold)
+                    Text("OK", color = ButtonTextColor, fontWeight = FontWeight.Bold)
                 }
             }
         )
@@ -1837,7 +1851,7 @@ fun AdminDashboardScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)
                 ) {
-                    Text("Proceed Anyway", color = Color.Black, fontWeight = FontWeight.Bold)
+                    Text("Proceed Anyway", color = ButtonTextColor, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -2116,7 +2130,7 @@ fun AdminDashboardScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)
                 ) {
-                    Text("Save Changes", color = Color.Black, fontWeight = FontWeight.Bold)
+                    Text("Save Changes", color = ButtonTextColor, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -2236,7 +2250,7 @@ fun AdminDashboardScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)
                 ) {
-                    Text("Save Changes", color = Color.Black, fontWeight = FontWeight.Bold)
+                    Text("Save Changes", color = ButtonTextColor, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -2322,7 +2336,7 @@ fun AdminDashboardScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)
                 ) {
-                    Text("Save Changes", color = Color.Black, fontWeight = FontWeight.Bold)
+                    Text("Save Changes", color = ButtonTextColor, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {

@@ -411,7 +411,7 @@ fun ProfileScreen(
                     Icon(
                         imageVector = Icons.Default.AccountCircle,
                         contentDescription = "Change Photo",
-                        tint = Color.Black,
+                        tint = com.example.shopping.ui.theme.ButtonTextColor,
                         modifier = Modifier.size(20.dp)
                     )
                 }

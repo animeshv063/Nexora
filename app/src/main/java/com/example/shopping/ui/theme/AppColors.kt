@@ -1,15 +1,37 @@
 package com.example.shopping.ui.theme
 
+import android.content.Context
+import android.content.SharedPreferences
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 
 object ThemeManager {
-    var isDarkMode by mutableStateOf(true)
+    private const val PREFS_NAME = "app_theme_prefs"
+    private const val KEY_IS_DARK = "is_dark_mode"
+    private var prefs: SharedPreferences? = null
 
-    fun toggleTheme() {
-        isDarkMode = !isDarkMode
+    var isDarkMode by mutableStateOf(true)
+        private set
+
+    fun init(context: Context) {
+        if (prefs == null) {
+            prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            isDarkMode = prefs?.getBoolean(KEY_IS_DARK, true) ?: true
+        }
+    }
+
+    fun toggleTheme(context: Context? = null) {
+        setDarkMode(!isDarkMode, context)
+    }
+
+    fun setDarkMode(darkMode: Boolean, context: Context? = null) {
+        isDarkMode = darkMode
+        if (prefs == null && context != null) {
+            prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        }
+        prefs?.edit()?.putBoolean(KEY_IS_DARK, darkMode)?.apply()
     }
 }
 
