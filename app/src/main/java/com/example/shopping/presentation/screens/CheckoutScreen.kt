@@ -135,22 +135,37 @@ fun CheckoutScreen(
     val itemTotal = unitPrice * maxOf(1, quantity)
     val shipping = if (itemTotal > 0) 50.0 else 0.0
     val total = itemTotal + shipping
-    val isAddressValid = deliveryAddress.isNotBlank() && !deliveryAddress.contains("Please set", ignoreCase = true)
+    val isAddressValid = deliveryAddress.isNotBlank() && !deliveryAddress.contains("Please set", ignoreCase = true) && !deliveryAddress.contains("No delivery address", ignoreCase = true)
 
     fun handlePlaceOrder() {
-        if (!isAddressValid) {
-            Toast.makeText(context, "⚠️ Please enter your delivery address to place an order", Toast.LENGTH_LONG).show()
-            tempName = recipientName
-            tempPhone = recipientPhone
-            tempAddress = ""
-            showAddressDialog = true
-            return
+        val userSavedAddress = userProfileState.data?.userData?.address?.trim().orEmpty()
+        val effectiveAddress = when {
+            deliveryAddress.isNotBlank() && !deliveryAddress.contains("No delivery address", ignoreCase = true) -> deliveryAddress.trim()
+            userSavedAddress.isNotBlank() && !userSavedAddress.contains("No delivery address", ignoreCase = true) -> userSavedAddress
+            else -> "Default Address (Saved at Checkout)"
+        }
+
+        // Persist the delivery address permanently to user profile if logged in
+        if (currentUser != null && effectiveAddress.isNotBlank() && !effectiveAddress.contains("No delivery address", ignoreCase = true)) {
+            val currentData = userProfileState.data?.userData ?: UserData()
+            val nameParts = recipientName.trim().split(" ")
+            val fName = nameParts.firstOrNull()?.ifEmpty { currentData.firstName } ?: currentData.firstName
+            val lName = if (nameParts.size > 1) nameParts.subList(1, nameParts.size).joinToString(" ") else currentData.lastName
+            
+            val updated = currentData.copy(
+                firstName = if (fName.isNotEmpty()) fName else (currentUser.displayName?.split(" ")?.firstOrNull() ?: ""),
+                lastName = if (lName.isNotEmpty()) lName else (currentUser.displayName?.split(" ")?.drop(1)?.joinToString(" ") ?: ""),
+                email = currentData.email.ifEmpty { currentUser.email ?: "" },
+                phoneNumber = if (recipientPhone.isNotBlank() && recipientPhone != "9876543210") recipientPhone else currentData.phoneNumber,
+                address = effectiveAddress
+            )
+            viewModel.updateProfile(UserDataParent(nodeId = currentUser.uid, userData = updated))
         }
 
         viewModel.placeOrder(
             productId = product.productId.ifEmpty { productId },
             quantity = maxOf(1, quantity),
-            address = deliveryAddress.trim(),
+            address = effectiveAddress,
             paymentMethod = selectedPaymentMethod,
             onSuccess = {
                 Toast.makeText(context, "🎉 Order Placed Successfully!", Toast.LENGTH_SHORT).show()
@@ -194,13 +209,18 @@ fun CheckoutScreen(
         val user = userProfileState.data?.userData
         if (user != null) {
             val fullName = "${user.firstName} ${user.lastName}".trim()
-            recipientName = if (fullName.isNotEmpty()) fullName else (currentUser?.displayName ?: "User")
-            recipientPhone = if (user.phoneNumber.isNotEmpty()) user.phoneNumber else "9876543210"
-            deliveryAddress = user.address.trim()
+            if (recipientName.isBlank()) {
+                recipientName = if (fullName.isNotEmpty()) fullName else (currentUser?.displayName ?: "User")
+            }
+            if (recipientPhone.isBlank()) {
+                recipientPhone = if (user.phoneNumber.isNotEmpty()) user.phoneNumber else "9876543210"
+            }
+            if (deliveryAddress.isBlank() && user.address.isNotBlank()) {
+                deliveryAddress = user.address.trim()
+            }
         } else if (currentUser != null) {
-            recipientName = currentUser.displayName ?: "User"
-            recipientPhone = "9876543210"
-            deliveryAddress = ""
+            if (recipientName.isBlank()) recipientName = currentUser.displayName ?: "User"
+            if (recipientPhone.isBlank()) recipientPhone = "9876543210"
         }
     }
 
@@ -226,10 +246,20 @@ fun CheckoutScreen(
                     deliveryAddress = address
                     Toast.makeText(context, "📍 Location updated via GPS!", Toast.LENGTH_SHORT).show()
 
-                    // Sync updated address to Firestore
+                    // Sync updated address to Firestore permanently
                     if (currentUser != null) {
                         val currentData = userProfileState.data?.userData ?: UserData()
-                        val updated = currentData.copy(address = address)
+                        val nameParts = recipientName.trim().split(" ")
+                        val fName = nameParts.firstOrNull()?.ifEmpty { currentData.firstName } ?: currentData.firstName
+                        val lName = if (nameParts.size > 1) nameParts.subList(1, nameParts.size).joinToString(" ") else currentData.lastName
+
+                        val updated = currentData.copy(
+                            firstName = if (fName.isNotEmpty()) fName else (currentUser.displayName?.split(" ")?.firstOrNull() ?: ""),
+                            lastName = if (lName.isNotEmpty()) lName else (currentUser.displayName?.split(" ")?.drop(1)?.joinToString(" ") ?: ""),
+                            email = currentData.email.ifEmpty { currentUser.email ?: "" },
+                            phoneNumber = if (recipientPhone.isNotBlank() && recipientPhone != "9876543210") recipientPhone else currentData.phoneNumber,
+                            address = address
+                        )
                         viewModel.updateProfile(UserDataParent(nodeId = currentUser.uid, userData = updated))
                     }
                 },
@@ -261,7 +291,7 @@ fun CheckoutScreen(
 
             try {
                 val cleanDigits = recipientPhone.filter { it.isDigit() }
-                val validContact = if (cleanDigits.length >= 10) cleanDigits.takeLast(10) else "9876543210"
+                val validContact = if (cleanDigits.length >= 10) cleanDigits.takeLast(10) else ""
                 val validEmail = currentUser?.email?.trim().takeIf { !it.isNullOrBlank() } ?: "customer@nexora.com"
                 val amountInPaise = (maxOf(1.0, total) * 100).toLong()
 
@@ -270,6 +300,7 @@ fun CheckoutScreen(
                     put("description", "Order Payment")
                     put("currency", "INR")
                     put("amount", amountInPaise)
+                    put("send_sms_hash", true)
                     val theme = JSONObject().apply {
                         put("color", "#FF6D00")
                     }
@@ -565,7 +596,7 @@ fun CheckoutScreen(
                             colors = RadioButtonDefaults.colors(selectedColor = OrangePrimary, unselectedColor = TextMuted)
                         )
                         Text(
-                            text = if (method == "Razorpay") "Razorpay Gateway (Cards / UPI / Netbanking) 💳" else "Cash on Delivery (COD) 💵",
+                            text = if (method == "Razorpay") "Razorpay (Online Payment) 💳" else "Cash on Delivery (COD) 💵",
                             fontSize = 14.sp,
                             fontWeight = if (selectedPaymentMethod == method) FontWeight.Bold else FontWeight.Normal,
                             color = TextWhite

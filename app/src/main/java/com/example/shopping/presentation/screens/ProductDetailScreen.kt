@@ -6,21 +6,18 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import com.example.shopping.presentation.utils.SmartAsyncImage
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -30,7 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -56,11 +53,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import com.example.shopping.domain.models.CartDataModels
 import com.example.shopping.domain.models.ProductDataModels
+import com.example.shopping.presentation.utils.SmartAsyncImage
 import com.example.shopping.presentation.viewModels.ShoppingAppViewModel
 import com.example.shopping.ui.theme.AccentCoral
 import com.example.shopping.ui.theme.ButtonTextColor
@@ -554,19 +552,25 @@ fun ProductDetailScreen(
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Row(
+                                            modifier = Modifier.weight(1f, fill = false),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
                                             Surface(
                                                 shape = RoundedCornerShape(6.dp),
-                                                color = OrangePrimary.copy(alpha = 0.2f),
-                                                modifier = Modifier.size(28.dp)
+                                                color = OrangePrimary.copy(alpha = 0.15f),
+                                                modifier = Modifier.padding(end = 8.dp)
                                             ) {
-                                                Box(contentAlignment = Alignment.Center) {
-                                                    Text(text = sz, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = OrangePrimary)
-                                                }
+                                                Text(
+                                                    text = sz,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    fontSize = 11.sp,
+                                                    color = OrangePrimary,
+                                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
+                                                )
                                             }
-                                            Spacer(modifier = Modifier.width(8.dp))
                                             Text(
-                                                text = "${product.name} (Size: $sz)",
+                                                text = product.name,
                                                 color = TextWhite,
                                                 fontSize = 13.sp,
                                                 maxLines = 1
@@ -575,21 +579,21 @@ fun ProductDetailScreen(
 
                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                             Text(
-                                                text = "x$qty  (₹${(unitPrice * qty).toInt()})",
-                                                fontWeight = FontWeight.SemiBold,
+                                                text = "x$qty (₹${(unitPrice * qty).toInt()})",
+                                                fontWeight = FontWeight.Medium,
                                                 color = TextMuted,
                                                 fontSize = 12.sp
                                             )
-                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Spacer(modifier = Modifier.width(8.dp))
                                             IconButton(
                                                 onClick = { sizeQuantities = sizeQuantities - sz },
-                                                modifier = Modifier.size(24.dp)
+                                                modifier = Modifier.size(22.dp)
                                             ) {
                                                 Icon(
-                                                    imageVector = Icons.Default.Clear,
-                                                    contentDescription = "Remove",
-                                                    tint = Color(0xFFEF4444),
-                                                    modifier = Modifier.size(16.dp)
+                                                    imageVector = Icons.Default.Close,
+                                                    contentDescription = "Remove size selection",
+                                                    tint = TextMuted.copy(alpha = 0.7f),
+                                                    modifier = Modifier.size(14.dp)
                                                 )
                                             }
                                         }
@@ -685,6 +689,7 @@ fun ProductDetailScreen(
                         } else if (totalSelectedUnits <= 0) {
                             Toast.makeText(context, "Please select at least 1 item to proceed to checkout!", Toast.LENGTH_SHORT).show()
                         } else {
+                            val userAddress = wishlistState.data // or user profile
                             val sizesSummary = activeSelections.entries.joinToString(", ") { "${it.key}(x${it.value})" }
                             onBuyNowClick(product.productId, totalSelectedUnits, sizesSummary)
                         }

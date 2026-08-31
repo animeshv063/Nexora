@@ -94,34 +94,36 @@ fun HomeScreen(
     val categoriesList = categoriesState.data?.filterNotNull() ?: emptyList()
     val productsList = productsState.data ?: emptyList()
 
-    // ⚡ Flash Sale: Products with genuine discount percentage based on real price and finalPrice
+    // ⚡ Flash Sale: Random 6 discounted products (or random 6 if no discounts) on each app open
     val flashSaleProducts = remember(productsList) {
         if (productsList.isEmpty()) emptyList()
         else {
-            // Sort by actual discount percentage (highest discount first) or take top discounted items
-            productsList
-                .filter { product ->
-                    val orig = product.price.toDoubleOrNull() ?: 0.0
-                    val final = product.finalPrice.toDoubleOrNull() ?: orig
-                    orig > final && orig > 0
-                }
-                .sortedByDescending { product ->
-                    val orig = product.price.toDoubleOrNull() ?: 1.0
-                    val final = product.finalPrice.toDoubleOrNull() ?: orig
-                    (orig - final) / orig
-                }
-                .take(6)
-                .ifEmpty { productsList.take(6) }
+            val discounted = productsList.filter { product ->
+                val orig = product.price.toDoubleOrNull() ?: 0.0
+                val final = product.finalPrice.toDoubleOrNull() ?: orig
+                orig > final && orig > 0
+            }
+            if (discounted.isNotEmpty()) {
+                discounted.shuffled().take(6)
+            } else {
+                productsList.shuffled().take(6)
+            }
         }
     }
 
-    // 🌟 Suggested For You: Featured products from catalogue
+    // 🌟 Suggested For You: Random 6 products strictly excluding the 6 selected in Flash Sale
     val suggestedForYouProducts = remember(productsList, flashSaleProducts) {
         if (productsList.isEmpty()) emptyList()
         else {
             val flashSaleIds = flashSaleProducts.map { it.productId }.toSet()
-            val remaining = productsList.filter { it.productId !in flashSaleIds }
-            if (remaining.isNotEmpty()) remaining.take(6) else productsList.take(6)
+            val remainingProducts = productsList.filter { it.productId !in flashSaleIds }
+            
+            if (remainingProducts.isNotEmpty()) {
+                remainingProducts.shuffled().take(6)
+            } else {
+                // In the rare case there are fewer than 7 total products in the catalog
+                productsList.shuffled().take(6)
+            }
         }
     }
 
@@ -423,12 +425,16 @@ fun HomeScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .height(60.dp),
+                        .height(68.dp),
                     shape = RoundedCornerShape(12.dp),
                     color = DarkCardSecondary
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text("Nothing to display", color = TextMuted, fontSize = 13.sp)
+                        if (categoriesState.isLoading) {
+                            CircularProgressIndicator(color = OrangePrimary, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                        } else {
+                            Text("No categories found", color = TextMuted, fontSize = 13.sp)
+                        }
                     }
                 }
             } else {
@@ -520,12 +526,16 @@ fun HomeScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .height(60.dp),
+                        .height(80.dp),
                     shape = RoundedCornerShape(12.dp),
                     color = DarkCardSecondary
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text("Nothing to display", color = TextMuted, fontSize = 13.sp)
+                        if (productsState.isLoading) {
+                            CircularProgressIndicator(color = OrangePrimary, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                        } else {
+                            Text("No products available", color = TextMuted, fontSize = 13.sp)
+                        }
                     }
                 }
             }
@@ -569,12 +579,16 @@ fun HomeScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .height(60.dp),
+                        .height(80.dp),
                     shape = RoundedCornerShape(12.dp),
                     color = DarkCardSecondary
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text("Nothing to display", color = TextMuted, fontSize = 13.sp)
+                        if (productsState.isLoading) {
+                            CircularProgressIndicator(color = OrangePrimary, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                        } else {
+                            Text("No products available", color = TextMuted, fontSize = 13.sp)
+                        }
                     }
                 }
             }

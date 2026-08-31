@@ -18,11 +18,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Check
@@ -44,18 +44,17 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import com.example.shopping.domain.models.UserData
 import com.example.shopping.domain.models.UserDataParent
 import com.example.shopping.presentation.utils.CustomTextField
@@ -63,21 +62,18 @@ import com.example.shopping.presentation.utils.ImageCropUtils
 import com.example.shopping.presentation.utils.LogOutAlertDialog
 import com.example.shopping.presentation.utils.ProfilePhotoStorage
 import com.example.shopping.presentation.viewModels.ShoppingAppViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-
 import com.example.shopping.ui.theme.DangerRed
 import com.example.shopping.ui.theme.DarkBg
 import com.example.shopping.ui.theme.DarkCard
 import com.example.shopping.ui.theme.DarkCardSecondary
 import com.example.shopping.ui.theme.DarkInputBorder
 import com.example.shopping.ui.theme.PrimaryAccent
-
 import com.example.shopping.ui.theme.TextMuted
 import com.example.shopping.ui.theme.TextWhite
 import com.google.firebase.auth.FirebaseAuth
-import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 @Composable
@@ -100,6 +96,7 @@ fun ProfileScreen(
     var showDeleteAccountDialog by rememberSaveable { mutableStateOf(false) }
     var showOrdersDialog by rememberSaveable { mutableStateOf(false) }
     var showResetOrdersConfirm by rememberSaveable { mutableStateOf(false) }
+    var orderToCancel by    remember { mutableStateOf<com.example.shopping.domain.models.OrderDataModel?>(null) }
 
     var selectedBitmapForCrop by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
 
@@ -566,6 +563,7 @@ fun ProfileScreen(
 
         // My Orders Card
         val ordersList = userOrdersState.data ?: emptyList()
+        val isOrdersLoading = userOrdersState.isLoading
         Surface(
             shape = RoundedCornerShape(12.dp),
             color = DarkCard,
@@ -592,7 +590,7 @@ fun ProfileScreen(
                             color = TextWhite
                         )
                         Text(
-                            text = if (ordersList.isEmpty()) "No active orders" else "${ordersList.size} orders placed",
+                            text = if (isOrdersLoading && ordersList.isEmpty()) "Loading orders..." else if (ordersList.isEmpty()) "No active orders" else "${ordersList.size} orders placed",
                             fontSize = 12.sp,
                             color = TextMuted
                         )
@@ -652,8 +650,24 @@ fun ProfileScreen(
                     }
                 },
                 text = {
-                    if (ordersList.isEmpty()) {
-                        Text(text = "You have not placed any orders yet.", color = TextMuted, fontSize = 14.sp)
+                    if (isOrdersLoading && ordersList.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(120.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = PrimaryAccent, modifier = Modifier.size(32.dp))
+                        }
+                    } else if (ordersList.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 20.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(text = "You have not placed any orders yet.", color = TextMuted, fontSize = 14.sp)
+                        }
                     } else {
                         androidx.compose.foundation.lazy.LazyColumn(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -712,9 +726,7 @@ fun ProfileScreen(
                                             Spacer(modifier = Modifier.height(8.dp))
                                             OutlinedButton(
                                                 onClick = {
-                                                    viewModel.cancelOrder(order.orderId, order.productId, order.quantity) {
-                                                        Toast.makeText(context, "Order Cancelled & Stock Restored! 🔄", Toast.LENGTH_SHORT).show()
-                                                    }
+                                                    orderToCancel = order
                                                 },
                                                 modifier = Modifier.fillMaxWidth().height(36.dp),
                                                 shape = RoundedCornerShape(6.dp),
@@ -733,6 +745,59 @@ fun ProfileScreen(
                 confirmButton = {
                     androidx.compose.material3.TextButton(onClick = { showOrdersDialog = false }) {
                         Text(text = "Close", color = PrimaryAccent)
+                    }
+                }
+            )
+        }
+
+        // Cancel Order Confirmation Dialog
+        orderToCancel?.let { targetOrder ->
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { orderToCancel = null },
+                title = { Text("Confirm Cancellation", fontWeight = FontWeight.Bold, color = TextWhite) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            text = "Are you sure you want to cancel this order?",
+                            color = TextWhite,
+                            fontSize = 14.sp
+                        )
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = DarkCardSecondary,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(10.dp)) {
+                                Text(
+                                    text = "Item: ${targetOrder.productName.ifEmpty { "Product" }}",
+                                    color = TextWhite,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(text = "Quantity: ${targetOrder.quantity}", color = TextMuted, fontSize = 12.sp)
+                                Text(text = "Payment Method: ${targetOrder.paymentMethod}", color = PrimaryAccent, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                            }
+                        }
+                    }
+                },
+                containerColor = DarkCard,
+                confirmButton = {
+                    androidx.compose.material3.Button(
+                        onClick = {
+                            val ord = targetOrder
+                            orderToCancel = null
+                            viewModel.cancelOrder(ord.orderId, ord.productId, ord.quantity) {
+                                Toast.makeText(context, "Order Cancelled & Stock Restored! 🔄", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = DangerRed)
+                    ) {
+                        Text("Yes, Cancel Order", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    androidx.compose.material3.TextButton(onClick = { orderToCancel = null }) {
+                        Text("No, Keep Order", color = TextMuted)
                     }
                 }
             )

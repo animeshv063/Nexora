@@ -117,6 +117,19 @@ fun sanitizeImageUrl(rawUrl: String): String {
         }
     }
 
+    // Handle Pexels direct images & page links with mobile optimization
+    if (url.contains("pexels.com", ignoreCase = true)) {
+        if (!url.contains("images.pexels.com")) {
+            val photoId = url.substringAfter("photo-").substringAfter("photos/").substringBefore("/").substringBefore("?").filter { it.isDigit() }
+            if (photoId.isNotBlank()) {
+                return "https://images.pexels.com/photos/$photoId/pexels-photo-$photoId.jpeg?auto=compress&cs=tinysrgb&w=800"
+            }
+        } else if (!url.contains("w=")) {
+            val separator = if (url.contains("?")) "&" else "?"
+            return "$url${separator}auto=compress&cs=tinysrgb&w=800"
+        }
+    }
+
     // Handle Pinterest direct image link if web page was copied
     if (url.contains("pinimg.com", ignoreCase = true) && url.startsWith("http")) {
         return url
