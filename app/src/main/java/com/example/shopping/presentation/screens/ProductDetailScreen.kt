@@ -15,9 +15,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -144,21 +146,18 @@ fun ProductDetailScreen(
     val rawPrice = if (product.finalPrice.isNotBlank() && product.finalPrice != "0") product.finalPrice else product.price
     val unitPrice = rawPrice.toDoubleOrNull() ?: 0.0
 
-    val statusBarsTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val safeTopBarPadding = if (statusBarsTop > 0.dp) statusBarsTop + 8.dp else 48.dp
-
     Box(modifier = Modifier.fillMaxSize().background(DarkBg)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = 90.dp)
+                .padding(bottom = 100.dp)
         ) {
-            // Main Product Image with Back & Fav buttons
+            // Main Product Image
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(340.dp)
+                    .height(370.dp)
                     .background(DarkCard)
             ) {
                 if (product.image.isNotEmpty()) {
@@ -170,65 +169,6 @@ fun ProductDetailScreen(
                         contentScale = ContentScale.Fit,
                         errorPlaceholderText = "${product.name}\n(Unable to load image link)"
                     )
-                }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 16.dp, end = 16.dp, top = safeTopBarPadding, bottom = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Surface(
-                        shape = CircleShape,
-                        color = DarkCardSecondary.copy(alpha = 0.85f),
-                        modifier = Modifier.size(40.dp).clickable { onBackClick() }
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "Back",
-                                tint = TextWhite
-                            )
-                        }
-                    }
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Surface(
-                            shape = CircleShape,
-                            color = DarkCardSecondary.copy(alpha = 0.85f),
-                            modifier = Modifier.size(40.dp).clickable {
-                                onNavigateToCart()
-                            }
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Default.ShoppingCart,
-                                    contentDescription = "Cart",
-                                    tint = TextWhite
-                                )
-                            }
-                        }
-
-                        Surface(
-                            shape = CircleShape,
-                            color = DarkCardSecondary.copy(alpha = 0.85f),
-                            modifier = Modifier.size(40.dp).clickable {
-                                viewModel.toggleFavorite(product)
-                            }
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                    contentDescription = "Favorite",
-                                    tint = if (isFavorite) AccentCoral else TextWhite
-                                )
-                            }
-                        }
-                    }
                 }
             }
 
@@ -626,11 +566,69 @@ fun ProductDetailScreen(
             }
         }
 
-        val isOutOfStock = product.availableUnits <= 0
+        // Floating Top Bar: Back, Cart, Favorite (pinned cleanly below status bar)
+        Row(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = DarkCardSecondary.copy(alpha = 0.85f),
+                modifier = Modifier.size(40.dp).clickable { onBackClick() }
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back",
+                        tint = TextWhite
+                    )
+                }
+            }
 
-        val navBarsBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-        val isThreeButton = navBarsBottom >= 30.dp
-        val bottomActionPadding: Dp = if (isThreeButton) navBarsBottom + 12.dp else 14.dp
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = DarkCardSecondary.copy(alpha = 0.85f),
+                    modifier = Modifier.size(40.dp).clickable {
+                        onNavigateToCart()
+                    }
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.ShoppingCart,
+                            contentDescription = "Cart",
+                            tint = TextWhite
+                        )
+                    }
+                }
+
+                Surface(
+                    shape = CircleShape,
+                    color = DarkCardSecondary.copy(alpha = 0.85f),
+                    modifier = Modifier.size(40.dp).clickable {
+                        viewModel.toggleFavorite(product)
+                    }
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = "Favorite",
+                            tint = if (isFavorite) AccentCoral else TextWhite
+                        )
+                    }
+                }
+            }
+        }
+
+        val isOutOfStock = product.availableUnits <= 0
 
         Surface(
             modifier = Modifier
@@ -642,7 +640,8 @@ fun ProductDetailScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = bottomActionPadding),
+                    .navigationBarsPadding()
+                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 OutlinedButton(

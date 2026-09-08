@@ -3,11 +3,8 @@ package com.example.shopping.presentation.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.ui.unit.Dp
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -56,23 +53,18 @@ fun SeeAllProductScreen(
     val productsState by viewModel.productsState.collectAsState()
     val products = productsState.data ?: emptyList()
 
-    val statusBarsTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val navBarsBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    val isThreeButton = navBarsBottom >= 30.dp
-    val safeTop: Dp = if (statusBarsTop > 0.dp) statusBarsTop + 6.dp else 44.dp
-    val safeBottom: Dp = if (isThreeButton) navBarsBottom + 12.dp else navBarsBottom + 6.dp
-
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkBg)
-            .padding(top = safeTop, bottom = safeBottom)
+            .statusBarsPadding()
+            .navigationBarsPadding()
     ) {
         // Header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBackClick, modifier = Modifier.size(36.dp)) {

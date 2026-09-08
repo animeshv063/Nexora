@@ -21,6 +21,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import com.example.shopping.ui.theme.DangerRed
 
 import androidx.compose.material3.Button
@@ -60,7 +62,8 @@ import com.example.shopping.ui.theme.TextWhite
 fun CartScreen(
     viewModel: ShoppingAppViewModel,
     onBackClick: () -> Unit,
-    onCheckoutClick: (String) -> Unit
+    onCheckoutClick: (String) -> Unit,
+    isStandalone: Boolean = false
 ) {
     val cartState by viewModel.cartState.collectAsState()
 
@@ -82,12 +85,13 @@ fun CartScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkBg)
+            .statusBarsPadding()
     ) {
         // Header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBackClick, modifier = Modifier.size(36.dp)) {
@@ -217,7 +221,12 @@ fun CartScreen(
                     shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
                     color = DarkCard
                 ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .then(if (isStandalone) Modifier.navigationBarsPadding() else Modifier)
+                            .padding(20.dp)
+                    ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween

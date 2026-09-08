@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.layout.Box
@@ -179,7 +180,8 @@ fun App() {
             CartScreen(
                 viewModel = viewModel,
                 onBackClick = { navController.popBackStack() },
-                onCheckoutClick = { pId -> navController.navigate(Routes.CheckoutScreen(productId = pId)) }
+                onCheckoutClick = { pId -> navController.navigate(Routes.CheckoutScreen(productId = pId)) },
+                isStandalone = true
             )
         }
 
@@ -206,58 +208,56 @@ fun MainContainer(
         BottomBarItem("Profile", Icons.Filled.Person)
     )
 
-    val navBarsBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    val isThreeButtonNav = navBarsBottom >= 30.dp
-    val bottomNavElevation: Dp = if (isThreeButtonNav) navBarsBottom + 12.dp else navBarsBottom + 4.dp
-
     Scaffold(
-        contentWindowInsets = WindowInsets.statusBars,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             Surface(
                 color = DarkBg,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = bottomNavElevation)
-                    .height(64.dp)
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
+                Box(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceAround,
-                    verticalAlignment = Alignment.CenterVertically
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .height(60.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    items.forEachIndexed { index, item ->
-                        val isSelected = selectedIndex == index
-                        if (isSelected) {
-                            // Active Orange Pill Shape matching screenshot
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(20.dp))
-                                    .background(OrangePrimary)
-                                    .padding(horizontal = 20.dp, vertical = 10.dp)
-                                    .clickable { selectedIndex = index },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = item.icon,
-                                    contentDescription = item.title,
-                                    tint = com.example.shopping.ui.theme.ButtonTextColor,
-                                    modifier = Modifier.size(20.dp)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceAround,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        items.forEachIndexed { index, item ->
+                            val isSelected = selectedIndex == index
+                            if (isSelected) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(20.dp))
+                                        .background(OrangePrimary)
+                                        .padding(horizontal = 20.dp, vertical = 10.dp)
+                                        .clickable { selectedIndex = index },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = item.icon,
+                                        contentDescription = item.title,
+                                        tint = com.example.shopping.ui.theme.ButtonTextColor,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            } else {
+                                Text(
+                                    text = item.title,
+                                    color = TextWhite,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    modifier = Modifier
+                                        .clickable { selectedIndex = index }
+                                        .padding(horizontal = 8.dp, vertical = 8.dp)
                                 )
-
                             }
-
-                        } else {
-                            Text(
-                                text = item.title,
-                                color = TextWhite,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Medium,
-                                modifier = Modifier
-                                    .clickable { selectedIndex = index }
-                                    .padding(horizontal = 8.dp, vertical = 8.dp)
-                            )
                         }
                     }
                 }
@@ -268,7 +268,7 @@ fun MainContainer(
             modifier = Modifier
                 .fillMaxSize()
                 .background(DarkBg)
-                .padding(innerPadding)
+                .padding(bottom = innerPadding.calculateBottomPadding())
         ) {
             when (selectedIndex) {
                 0 -> HomeScreen(
@@ -298,7 +298,8 @@ fun MainContainer(
                     onBackClick = { selectedIndex = 0 },
                     onCheckoutClick = { productId ->
                         mainAppNavController.navigate(Routes.CheckoutScreen(productId = productId))
-                    }
+                    },
+                    isStandalone = false
                 )
                 3 -> ProfileScreen(
                     viewModel = viewModel,
