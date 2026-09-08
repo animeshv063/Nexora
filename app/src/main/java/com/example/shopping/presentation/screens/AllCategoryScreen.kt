@@ -61,7 +61,6 @@ fun AllCategoryScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkBg)
-            .statusBarsPadding()
             .navigationBarsPadding()
     ) {
         Row(

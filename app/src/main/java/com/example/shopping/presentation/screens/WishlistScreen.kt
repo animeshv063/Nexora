@@ -59,7 +59,6 @@ fun WishlistScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkBg)
-            .statusBarsPadding()
     ) {
         Row(
             modifier = Modifier

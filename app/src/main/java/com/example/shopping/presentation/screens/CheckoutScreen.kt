@@ -424,7 +424,6 @@ fun CheckoutScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkBg)
-            .statusBarsPadding()
             .navigationBarsPadding()
             .verticalScroll(rememberScrollState())
     ) {

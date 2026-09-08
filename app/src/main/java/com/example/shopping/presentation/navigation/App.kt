@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -26,15 +27,30 @@ import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.ShoppingCart
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.windowInsetsTopHeight
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import android.app.Activity
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -63,6 +79,7 @@ import com.example.shopping.presentation.screens.WishlistScreen
 import com.example.shopping.presentation.viewModels.ShoppingAppViewModel
 import com.example.shopping.ui.theme.DarkBg
 import com.example.shopping.ui.theme.DarkCard
+import com.example.shopping.ui.theme.DarkInputBorder
 import com.example.shopping.ui.theme.OrangePrimary
 import com.example.shopping.ui.theme.TextMuted
 import com.example.shopping.ui.theme.TextWhite
@@ -80,116 +97,138 @@ fun App() {
     val auth = FirebaseAuth.getInstance()
     val startDestination: Any = if (auth.currentUser != null) SubNavigation.MainHomeScreen else SubNavigation.LoginSignUpScreen
 
-    NavHost(
-        navController = navController,
-        startDestination = startDestination
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(DarkBg)
     ) {
-        composable<SubNavigation.LoginSignUpScreen> {
-            val authNavController = rememberNavController()
-            NavHost(navController = authNavController, startDestination = Routes.LoginScreen) {
-                composable<Routes.LoginScreen> {
-                    LoginScreen(
-                        viewModel = viewModel,
-                        onNavigateToSignUp = { authNavController.navigate(Routes.SignUpScreen) },
-                        onLoginSuccess = {
-                            navController.navigate(SubNavigation.MainHomeScreen) {
-                                popUpTo(SubNavigation.LoginSignUpScreen) { inclusive = true }
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Dedicated status bar area matching the exact active theme color
+            Spacer(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .windowInsetsTopHeight(WindowInsets.statusBars)
+                    .background(DarkBg)
+            )
+            // Application content strictly starts below status bar - cannot touch or cross it
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
+                NavHost(
+            navController = navController,
+            startDestination = startDestination
+        ) {
+            composable<SubNavigation.LoginSignUpScreen> {
+                val authNavController = rememberNavController()
+                NavHost(navController = authNavController, startDestination = Routes.LoginScreen) {
+                    composable<Routes.LoginScreen> {
+                        LoginScreen(
+                            viewModel = viewModel,
+                            onNavigateToSignUp = { authNavController.navigate(Routes.SignUpScreen) },
+                            onLoginSuccess = {
+                                navController.navigate(SubNavigation.MainHomeScreen) {
+                                    popUpTo(SubNavigation.LoginSignUpScreen) { inclusive = true }
+                                }
                             }
-                        }
-                    )
-                }
-                composable<Routes.SignUpScreen> {
-                    SignUpScreen(
-                        viewModel = viewModel,
-                        onNavigateToLogin = { authNavController.popBackStack() },
-                        onSignUpSuccess = {
-                            navController.navigate(SubNavigation.MainHomeScreen) {
-                                popUpTo(SubNavigation.LoginSignUpScreen) { inclusive = true }
+                        )
+                    }
+                    composable<Routes.SignUpScreen> {
+                        SignUpScreen(
+                            viewModel = viewModel,
+                            onNavigateToLogin = { authNavController.popBackStack() },
+                            onSignUpSuccess = {
+                                navController.navigate(SubNavigation.MainHomeScreen) {
+                                    popUpTo(SubNavigation.LoginSignUpScreen) { inclusive = true }
+                                }
                             }
-                        }
-                    )
-                }
-            }
-        }
-
-        composable<SubNavigation.MainHomeScreen> {
-            MainContainer(
-                mainAppNavController = navController,
-                viewModel = viewModel
-            )
-        }
-
-        composable<Routes.AllCategoryScreen> {
-            AllCategoryScreen(
-                viewModel = viewModel,
-                onBackClick = { navController.popBackStack() },
-                onCategoryClick = { catName ->
-                    navController.navigate(Routes.EachCategoryItemsScreens(categoryName = catName))
-                }
-            )
-        }
-
-        composable<Routes.EachCategoryItemsScreens> { backStackEntry ->
-            val route = backStackEntry.toRoute<Routes.EachCategoryItemsScreens>()
-            CategoryProductsScreen(
-                categoryName = route.categoryName,
-                viewModel = viewModel,
-                onBackClick = { navController.popBackStack() },
-                onProductClick = { pId -> navController.navigate(Routes.EachProductDetailScreen(products = pId)) }
-            )
-        }
-
-        composable<Routes.SeeAllProductScreen> {
-            SeeAllProductScreen(
-                viewModel = viewModel,
-                onBackClick = { navController.popBackStack() },
-                onProductClick = { pId -> navController.navigate(Routes.EachProductDetailScreen(products = pId)) }
-            )
-        }
-
-        composable<Routes.EachProductDetailScreen> { backStackEntry ->
-            val route = backStackEntry.toRoute<Routes.EachProductDetailScreen>()
-            ProductDetailScreen(
-                productId = route.products,
-                viewModel = viewModel,
-                onBackClick = { navController.popBackStack() },
-                onNavigateToCart = { navController.navigate(Routes.CartScreen) },
-                onBuyNowClick = { pId, qty, size ->
-                    navController.navigate(Routes.CheckoutScreen(productId = pId, quantity = qty, size = size))
-                }
-            )
-        }
-
-        composable<Routes.CheckoutScreen> { backStackEntry ->
-            val route = backStackEntry.toRoute<Routes.CheckoutScreen>()
-            CheckoutScreen(
-                productId = route.productId,
-                quantity = route.quantity,
-                size = route.size,
-                viewModel = viewModel,
-                onBackClick = { navController.popBackStack() },
-                onOrderSuccess = {
-                    navController.navigate(SubNavigation.MainHomeScreen) {
-                        popUpTo(SubNavigation.MainHomeScreen) { inclusive = true }
+                        )
                     }
                 }
-            )
-        }
+            }
 
-        composable<Routes.CartScreen> {
-            CartScreen(
-                viewModel = viewModel,
-                onBackClick = { navController.popBackStack() },
-                onCheckoutClick = { pId -> navController.navigate(Routes.CheckoutScreen(productId = pId)) },
-                isStandalone = true
-            )
-        }
+            composable<SubNavigation.MainHomeScreen> {
+                MainContainer(
+                    mainAppNavController = navController,
+                    viewModel = viewModel
+                )
+            }
 
-        composable<Routes.AdminDashboardScreen> {
-            AdminDashboardScreen(
-                viewModel = viewModel,
-                onBackClick = { navController.popBackStack() }
-            )
+            composable<Routes.AllCategoryScreen> {
+                AllCategoryScreen(
+                    viewModel = viewModel,
+                    onBackClick = { navController.popBackStack() },
+                    onCategoryClick = { catName ->
+                        navController.navigate(Routes.EachCategoryItemsScreens(categoryName = catName))
+                    }
+                )
+            }
+
+            composable<Routes.EachCategoryItemsScreens> { backStackEntry ->
+                val route = backStackEntry.toRoute<Routes.EachCategoryItemsScreens>()
+                CategoryProductsScreen(
+                    categoryName = route.categoryName,
+                    viewModel = viewModel,
+                    onBackClick = { navController.popBackStack() },
+                    onProductClick = { pId -> navController.navigate(Routes.EachProductDetailScreen(products = pId)) }
+                )
+            }
+
+            composable<Routes.SeeAllProductScreen> {
+                SeeAllProductScreen(
+                    viewModel = viewModel,
+                    onBackClick = { navController.popBackStack() },
+                    onProductClick = { pId -> navController.navigate(Routes.EachProductDetailScreen(products = pId)) }
+                )
+            }
+
+            composable<Routes.EachProductDetailScreen> { backStackEntry ->
+                val route = backStackEntry.toRoute<Routes.EachProductDetailScreen>()
+                ProductDetailScreen(
+                    productId = route.products,
+                    viewModel = viewModel,
+                    onBackClick = { navController.popBackStack() },
+                    onNavigateToCart = { navController.navigate(Routes.CartScreen) },
+                    onBuyNowClick = { pId, qty, size ->
+                        navController.navigate(Routes.CheckoutScreen(productId = pId, quantity = qty, size = size))
+                    }
+                )
+            }
+
+            composable<Routes.CheckoutScreen> { backStackEntry ->
+                val route = backStackEntry.toRoute<Routes.CheckoutScreen>()
+                CheckoutScreen(
+                    productId = route.productId,
+                    quantity = route.quantity,
+                    size = route.size,
+                    viewModel = viewModel,
+                    onBackClick = { navController.popBackStack() },
+                    onOrderSuccess = {
+                        navController.navigate(SubNavigation.MainHomeScreen) {
+                            popUpTo(SubNavigation.MainHomeScreen) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            composable<Routes.CartScreen> {
+                CartScreen(
+                    viewModel = viewModel,
+                    onBackClick = { navController.popBackStack() },
+                    onCheckoutClick = { pId -> navController.navigate(Routes.CheckoutScreen(productId = pId)) },
+                    isStandalone = true
+                )
+            }
+
+            composable<Routes.AdminDashboardScreen> {
+                AdminDashboardScreen(
+                    viewModel = viewModel,
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+        }
+            }
         }
     }
 }
@@ -199,7 +238,86 @@ fun MainContainer(
     mainAppNavController: androidx.navigation.NavHostController,
     viewModel: ShoppingAppViewModel
 ) {
+    val context = LocalContext.current
     var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
+    var showExitDialog by rememberSaveable { mutableStateOf(false) }
+
+    // When on Wishlist (1), Cart/Orders (2), or Profile (3):
+    // Back button or back gesture returns to Home page (0)
+    BackHandler(enabled = selectedIndex != 0) {
+        selectedIndex = 0
+    }
+
+    // When on Home page (0):
+    // Back button or back gesture prompts exit confirmation dialog
+    BackHandler(enabled = selectedIndex == 0) {
+        showExitDialog = true
+    }
+
+    if (showExitDialog) {
+        AlertDialog(
+            onDismissRequest = { showExitDialog = false },
+            title = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = OrangePrimary.copy(alpha = 0.15f),
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                                contentDescription = "Exit",
+                                tint = OrangePrimary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    Text(
+                        text = "Exit Nexora?",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextWhite
+                    )
+                }
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to close the application?",
+                    fontSize = 14.sp,
+                    color = TextMuted,
+                    lineHeight = 20.sp
+                )
+            },
+            containerColor = DarkCard,
+            shape = RoundedCornerShape(18.dp),
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { showExitDialog = false },
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(1.dp, DarkInputBorder),
+                    colors = ButtonDefaults.outlinedButtonColors(containerColor = DarkCard)
+                ) {
+                    Text(text = "Cancel", color = TextWhite, fontWeight = FontWeight.SemiBold)
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showExitDialog = false
+                        (context as? Activity)?.finish()
+                    },
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)
+                ) {
+                    Text(text = "Exit", color = com.example.shopping.ui.theme.ButtonTextColor, fontWeight = FontWeight.Bold)
+                }
+            }
+        )
+    }
 
     val items = listOf(
         BottomBarItem("Home", Icons.Filled.Home),
@@ -212,51 +330,87 @@ fun MainContainer(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             Surface(
-                color = DarkBg,
+                color = DarkCard,
+                shadowElevation = 16.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .navigationBarsPadding()
-                        .height(60.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    HorizontalDivider(
+                        color = DarkInputBorder.copy(alpha = 0.5f),
+                        thickness = 1.dp
+                    )
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.SpaceAround,
-                        verticalAlignment = Alignment.CenterVertically
+                            .navigationBarsPadding()
+                            .height(64.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        items.forEachIndexed { index, item ->
-                            val isSelected = selectedIndex == index
-                            if (isSelected) {
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(20.dp))
-                                        .background(OrangePrimary)
-                                        .padding(horizontal = 20.dp, vertical = 10.dp)
-                                        .clickable { selectedIndex = index },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = item.icon,
-                                        contentDescription = item.title,
-                                        tint = com.example.shopping.ui.theme.ButtonTextColor,
-                                        modifier = Modifier.size(20.dp)
-                                    )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.SpaceAround,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            items.forEachIndexed { index, item ->
+                                val isSelected = selectedIndex == index
+                                if (isSelected) {
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(20.dp))
+                                            .background(OrangePrimary)
+                                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                                            .clickable { selectedIndex = index },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = item.icon,
+                                                contentDescription = item.title,
+                                                tint = com.example.shopping.ui.theme.ButtonTextColor,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                            Text(
+                                                text = item.title,
+                                                color = com.example.shopping.ui.theme.ButtonTextColor,
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .clickable { selectedIndex = index }
+                                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = when (index) {
+                                                0 -> Icons.Outlined.Home
+                                                1 -> Icons.Outlined.FavoriteBorder
+                                                2 -> Icons.Outlined.ShoppingCart
+                                                3 -> Icons.Outlined.Person
+                                                else -> item.icon
+                                            },
+                                            contentDescription = item.title,
+                                            tint = TextMuted,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = item.title,
+                                            color = TextMuted,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
                                 }
-                            } else {
-                                Text(
-                                    text = item.title,
-                                    color = TextWhite,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    modifier = Modifier
-                                        .clickable { selectedIndex = index }
-                                        .padding(horizontal = 8.dp, vertical = 8.dp)
-                                )
                             }
                         }
                     }
@@ -303,6 +457,7 @@ fun MainContainer(
                 )
                 3 -> ProfileScreen(
                     viewModel = viewModel,
+                    onBackClick = { selectedIndex = 0 },
                     onLogOutSuccess = {
                         mainAppNavController.navigate(SubNavigation.LoginSignUpScreen) {
                             popUpTo(SubNavigation.MainHomeScreen) { inclusive = true }

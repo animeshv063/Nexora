@@ -85,7 +85,6 @@ fun CartScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkBg)
-            .statusBarsPadding()
     ) {
         // Header
         Row(

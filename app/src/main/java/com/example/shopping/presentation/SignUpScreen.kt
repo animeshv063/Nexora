@@ -132,7 +132,6 @@ fun SignUpScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkBg)
-            .statusBarsPadding()
             .navigationBarsPadding()
             .padding(horizontal = 24.dp, vertical = 20.dp)
             .imePadding()

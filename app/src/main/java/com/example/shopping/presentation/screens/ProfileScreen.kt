@@ -30,11 +30,13 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -80,6 +82,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun ProfileScreen(
     viewModel: ShoppingAppViewModel,
+    onBackClick: () -> Unit = {},
     onLogOutSuccess: () -> Unit,
     onAdminClick: () -> Unit = {}
 ) {
@@ -340,20 +343,29 @@ fun ProfileScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkBg)
-            .statusBarsPadding()
-            .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 20.dp)
+            .padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 20.dp)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // Title
-        Text(
-            text = "My Profile",
-            color = TextWhite,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBackClick, modifier = Modifier.size(36.dp)) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = TextWhite
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = "My Profile",
+                color = TextWhite,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
 

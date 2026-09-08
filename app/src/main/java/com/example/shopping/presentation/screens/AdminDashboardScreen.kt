@@ -254,7 +254,6 @@ fun AdminDashboardScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(DarkBg)
-                .statusBarsPadding()
                 .navigationBarsPadding()
                 .imePadding()
                 .padding(horizontal = 24.dp)
@@ -428,7 +427,6 @@ fun AdminDashboardScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(DarkBg)
-                .statusBarsPadding()
                 .navigationBarsPadding()
         ) {
             // Header

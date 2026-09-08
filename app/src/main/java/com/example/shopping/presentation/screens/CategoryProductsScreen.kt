@@ -92,7 +92,6 @@ fun CategoryProductsScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkBg)
-            .statusBarsPadding()
             .navigationBarsPadding()
     ) {
         // Header

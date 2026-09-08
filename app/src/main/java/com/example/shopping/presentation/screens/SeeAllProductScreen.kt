@@ -57,7 +57,6 @@ fun SeeAllProductScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkBg)
-            .statusBarsPadding()
             .navigationBarsPadding()
     ) {
         // Header

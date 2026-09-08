@@ -133,7 +133,6 @@ fun HomeScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkBg)
-            .statusBarsPadding()
             .verticalScroll(rememberScrollState())
     ) {
         // Nexora Brand Header

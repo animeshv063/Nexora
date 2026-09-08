@@ -157,8 +157,8 @@ fun ProductDetailScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(370.dp)
-                    .background(DarkCard)
+                    .height(380.dp)
+                    .background(DarkBg)
             ) {
                 if (product.image.isNotEmpty()) {
                     SmartAsyncImage(
@@ -172,17 +172,13 @@ fun ProductDetailScreen(
                 }
             }
 
-            // Product Details Content
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-                color = DarkCard
+            // Product Details Content (Seamless & Uniform Background)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(DarkBg)
+                    .padding(horizontal = 20.dp, vertical = 16.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp)
-                ) {
                     // Category, Gender, Rating & Stock Status Badges
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -563,16 +559,14 @@ fun ProductDetailScreen(
                         lineHeight = 22.sp
                     )
                 }
-            }
         }
 
-        // Floating Top Bar: Back, Cart, Favorite (pinned cleanly below status bar)
+        // Floating Top Bar: Back, Cart, Favorite
         Row(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -634,78 +628,81 @@ fun ProductDetailScreen(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth(),
-            color = DarkBg,
-            shadowElevation = 8.dp
+            color = DarkCard,
+            shadowElevation = 16.dp
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                OutlinedButton(
-                    onClick = {
-                        if (isOutOfStock) {
-                            Toast.makeText(context, "This product is currently out of stock!", Toast.LENGTH_SHORT).show()
-                        } else if (totalSelectedUnits <= 0) {
-                            Toast.makeText(context, "Please select at least 1 item to add to cart!", Toast.LENGTH_SHORT).show()
-                        } else {
-                            activeSelections.forEach { (sz, qty) ->
-                                val cartItem = CartDataModels(
-                                    productId = product.productId,
-                                    name = product.name,
-                                    image = product.image,
-                                    quantity = qty.toString(),
-                                    size = sz,
-                                    description = product.description,
-                                    category = product.category,
-                                    price = product.price,
-                                    finalPrice = product.finalPrice
-                                )
-                                viewModel.addToCart(cartItem)
+            Column(modifier = Modifier.fillMaxWidth()) {
+                HorizontalDivider(color = DarkInputBorder.copy(alpha = 0.5f), thickness = 1.dp)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            if (isOutOfStock) {
+                                Toast.makeText(context, "This product is currently out of stock!", Toast.LENGTH_SHORT).show()
+                            } else if (totalSelectedUnits <= 0) {
+                                Toast.makeText(context, "Please select at least 1 item to add to cart!", Toast.LENGTH_SHORT).show()
+                            } else {
+                                activeSelections.forEach { (sz, qty) ->
+                                    val cartItem = CartDataModels(
+                                        productId = product.productId,
+                                        name = product.name,
+                                        image = product.image,
+                                        quantity = qty.toString(),
+                                        size = sz,
+                                        description = product.description,
+                                        category = product.category,
+                                        price = product.price,
+                                        finalPrice = product.finalPrice
+                                    )
+                                    viewModel.addToCart(cartItem)
+                                }
                             }
-                        }
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(50.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    border = BorderStroke(1.dp, if (isOutOfStock || totalSelectedUnits <= 0) DarkInputBorder else OrangePrimary),
-                    colors = ButtonDefaults.outlinedButtonColors(containerColor = DarkBg)
-                ) {
-                    Text(
-                        text = if (isOutOfStock) "Out of Stock" else "Add to Cart (${if (totalSelectedUnits > 0) totalSelectedUnits else 0})",
-                        color = if (isOutOfStock || totalSelectedUnits <= 0) TextMuted else OrangePrimary,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(50.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, if (isOutOfStock || totalSelectedUnits <= 0) DarkInputBorder else OrangePrimary),
+                        colors = ButtonDefaults.outlinedButtonColors(containerColor = DarkCard)
+                    ) {
+                        Text(
+                            text = if (isOutOfStock) "Out of Stock" else "Add to Cart (${if (totalSelectedUnits > 0) totalSelectedUnits else 0})",
+                            color = if (isOutOfStock || totalSelectedUnits <= 0) TextMuted else OrangePrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
 
-                Button(
-                    onClick = {
-                        if (isOutOfStock) {
-                            Toast.makeText(context, "This product is currently out of stock!", Toast.LENGTH_SHORT).show()
-                        } else if (totalSelectedUnits <= 0) {
-                            Toast.makeText(context, "Please select at least 1 item to proceed to checkout!", Toast.LENGTH_SHORT).show()
-                        } else {
-                            val userAddress = wishlistState.data // or user profile
-                            val sizesSummary = activeSelections.entries.joinToString(", ") { "${it.key}(x${it.value})" }
-                            onBuyNowClick(product.productId, totalSelectedUnits, sizesSummary)
-                        }
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(50.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isOutOfStock || totalSelectedUnits <= 0) DarkCardSecondary else OrangePrimary
-                    )
-                ) {
-                    Text(
-                        text = if (isOutOfStock) "Unavailable" else "Buy Now (${if (totalSelectedUnits > 0) totalSelectedUnits else 0})",
-                        color = if (isOutOfStock || totalSelectedUnits <= 0) TextMuted else ButtonTextColor,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Button(
+                        onClick = {
+                            if (isOutOfStock) {
+                                Toast.makeText(context, "This product is currently out of stock!", Toast.LENGTH_SHORT).show()
+                            } else if (totalSelectedUnits <= 0) {
+                                Toast.makeText(context, "Please select at least 1 item to proceed to checkout!", Toast.LENGTH_SHORT).show()
+                            } else {
+                                val userAddress = wishlistState.data // or user profile
+                                val sizesSummary = activeSelections.entries.joinToString(", ") { "${it.key}(x${it.value})" }
+                                onBuyNowClick(product.productId, totalSelectedUnits, sizesSummary)
+                            }
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(50.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isOutOfStock || totalSelectedUnits <= 0) DarkCardSecondary else OrangePrimary
+                        )
+                    ) {
+                        Text(
+                            text = if (isOutOfStock) "Unavailable" else "Buy Now (${if (totalSelectedUnits > 0) totalSelectedUnits else 0})",
+                            color = if (isOutOfStock || totalSelectedUnits <= 0) TextMuted else ButtonTextColor,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }
