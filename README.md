@@ -7,6 +7,7 @@
 [![Dagger Hilt](https://img.shields.io/badge/Dagger%20Hilt-KSP-00C853?style=for-the-badge&logo=dagger)](https://dagger.dev/hilt/)
 [![Firebase](https://img.shields.io/badge/Firebase-Firestore%20%7C%20Auth-FFCA28?style=for-the-badge&logo=firebase)](https://firebase.google.com)
 [![Razorpay](https://img.shields.io/badge/Razorpay-Payment%20Gateway-0C2340?style=for-the-badge&logo=razorpay)](https://razorpay.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
 
 A high-performance, full-featured modern e-commerce mobile application built for Android utilizing **Jetpack Compose (Material 3)**, **Clean Architecture (MVVM + Use Cases)**, **Dagger Hilt Dependency Injection**, and **Firebase Cloud Firestore**.
 
@@ -88,7 +89,7 @@ app/
 ### Setup Instructions
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/animeshv063/ShoppingApp.git
+   git clone https://github.com/animeshv063/Nexora.git
    ```
 2. **Add Firebase Configuration**:
    - Create a project on [Firebase Console](https://console.firebase.google.com).
