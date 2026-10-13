@@ -9,11 +9,17 @@ import com.example.shopping.domain.models.CategoryDataModels
 import com.example.shopping.domain.models.ProductDataModels
 import com.example.shopping.domain.models.UserData
 import com.example.shopping.domain.models.UserDataParent
-import com.example.shopping.domain.useCase.DeleteUserAccountUseCase
-import com.example.shopping.domain.useCase.LoginWithGoogleUseCase
+import com.example.shopping.domain.useCase.AddBannerUseCase
+import com.example.shopping.domain.useCase.AddCategoryUseCase
+import com.example.shopping.domain.useCase.AddProductUseCase
 import com.example.shopping.domain.useCase.AddtoCardUseCase
 import com.example.shopping.domain.useCase.AddtoFavUseCase
+import com.example.shopping.domain.useCase.CancelOrderUseCase
 import com.example.shopping.domain.useCase.CreateUserUseCase
+import com.example.shopping.domain.useCase.DeleteBannerUseCase
+import com.example.shopping.domain.useCase.DeleteCategoryUseCase
+import com.example.shopping.domain.useCase.DeleteProductUseCase
+import com.example.shopping.domain.useCase.DeleteUserAccountUseCase
 import com.example.shopping.domain.useCase.GetAllCategoryUseCase
 import com.example.shopping.domain.useCase.GetAllFavUseCase
 import com.example.shopping.domain.useCase.GetAllProductUseCase
@@ -22,8 +28,17 @@ import com.example.shopping.domain.useCase.GetBannerUseCase
 import com.example.shopping.domain.useCase.GetCartUseCase
 import com.example.shopping.domain.useCase.GetCheckoutUseCase
 import com.example.shopping.domain.useCase.GetSpecificCategoryitems
+import com.example.shopping.domain.useCase.GetUserOrdersUseCase
 import com.example.shopping.domain.useCase.GetUserUseCase
 import com.example.shopping.domain.useCase.LoginUserUseCase
+import com.example.shopping.domain.useCase.LoginWithGoogleUseCase
+import com.example.shopping.domain.useCase.PlaceOrderUseCase
+import com.example.shopping.domain.useCase.RemoveFromCartUseCase
+import com.example.shopping.domain.useCase.RemoveFromFavUseCase
+import com.example.shopping.domain.useCase.ResetUserOrdersUseCase
+import com.example.shopping.domain.useCase.UpdateBannerUseCase
+import com.example.shopping.domain.useCase.UpdateCategoryUseCase
+import com.example.shopping.domain.useCase.UpdateProductUseCase
 import com.example.shopping.domain.useCase.UpdateUserDataUseCase
 import com.example.shopping.domain.useCase.getCategoryInLimit
 import com.example.shopping.domain.useCase.getProductByID
@@ -47,10 +62,10 @@ class ShoppingAppViewModel @Inject constructor(
     private val createUserUseCase: CreateUserUseCase,
     private val loginUserUseCase: LoginUserUseCase,
     private val getUserUseCase: GetUserUseCase,
-    private val updateUserDataUseCase: UpdateUserDataUseCase,
-    private val userProfileImageUseCase: userProfileImageUseCase,
-    private val deleteUserAccountUseCase: DeleteUserAccountUseCase,
-    private val loginWithGoogleUseCase: LoginWithGoogleUseCase,
+    internal val updateUserDataUseCase: UpdateUserDataUseCase,
+    internal val userProfileImageUseCase: userProfileImageUseCase,
+    internal val deleteUserAccountUseCase: DeleteUserAccountUseCase,
+    internal val loginWithGoogleUseCase: LoginWithGoogleUseCase,
     private val getCategoryInLimitUseCase: getCategoryInLimit,
     private val getProductsInLimitUseCase: getProductsInLimitUseCase,
     private val getAllProductUseCase: GetAllProductUseCase,
@@ -64,24 +79,22 @@ class ShoppingAppViewModel @Inject constructor(
     private val getBannerUseCase: GetBannerUseCase,
     private val getSpecificCategoryItemsUseCase: GetSpecificCategoryitems,
     private val getAllSuggestedProductsUseCase: GetAllSuggestedProductsUseCase,
-    private val removeFromCartUseCase: com.example.shopping.domain.useCase.RemoveFromCartUseCase,
-    private val removeFromFavUseCase: com.example.shopping.domain.useCase.RemoveFromFavUseCase,
-    private val placeOrderUseCase: com.example.shopping.domain.useCase.PlaceOrderUseCase,
-    private val cancelOrderUseCase: com.example.shopping.domain.useCase.CancelOrderUseCase,
-    private val getUserOrdersUseCase: com.example.shopping.domain.useCase.GetUserOrdersUseCase,
-    private val resetUserOrdersUseCase: com.example.shopping.domain.useCase.ResetUserOrdersUseCase,
-    private val addProductUseCase: com.example.shopping.domain.useCase.AddProductUseCase,
-    private val updateProductUseCase: com.example.shopping.domain.useCase.UpdateProductUseCase,
-    private val deleteProductUseCase: com.example.shopping.domain.useCase.DeleteProductUseCase,
-    private val addCategoryUseCase: com.example.shopping.domain.useCase.AddCategoryUseCase,
-    private val updateCategoryUseCase: com.example.shopping.domain.useCase.UpdateCategoryUseCase,
-    private val deleteCategoryUseCase: com.example.shopping.domain.useCase.DeleteCategoryUseCase,
-    private val addBannerUseCase: com.example.shopping.domain.useCase.AddBannerUseCase,
-    private val updateBannerUseCase: com.example.shopping.domain.useCase.UpdateBannerUseCase,
-    private val deleteBannerUseCase: com.example.shopping.domain.useCase.DeleteBannerUseCase
+    private val removeFromCartUseCase: RemoveFromCartUseCase,
+    private val removeFromFavUseCase: RemoveFromFavUseCase,
+    internal val placeOrderUseCase: PlaceOrderUseCase,
+    internal val cancelOrderUseCase: CancelOrderUseCase,
+    internal val getUserOrdersUseCase: GetUserOrdersUseCase,
+    internal val resetUserOrdersUseCase: ResetUserOrdersUseCase,
+    internal val addProductUseCase: AddProductUseCase,
+    internal val updateProductUseCase: UpdateProductUseCase,
+    internal val deleteProductUseCase: DeleteProductUseCase,
+    internal val addCategoryUseCase: AddCategoryUseCase,
+    internal val updateCategoryUseCase: UpdateCategoryUseCase,
+    internal val deleteCategoryUseCase: DeleteCategoryUseCase,
+    internal val addBannerUseCase: AddBannerUseCase,
+    internal val updateBannerUseCase: UpdateBannerUseCase,
+    internal val deleteBannerUseCase: DeleteBannerUseCase
 ) : ViewModel() {
-
-
 
     // Auth States
     private val _signUpState = MutableStateFlow(ResponseState<String>())
@@ -91,10 +104,10 @@ class ShoppingAppViewModel @Inject constructor(
     val loginState = _loginState.asStateFlow()
 
     // User Profile
-    private val _userProfileState = MutableStateFlow(ResponseState<UserDataParent>())
+    internal val _userProfileState = MutableStateFlow(ResponseState<UserDataParent>())
     val userProfileState = _userProfileState.asStateFlow()
 
-    private val _profileUpdateState = MutableStateFlow(ResponseState<String>())
+    internal val _profileUpdateState = MutableStateFlow(ResponseState<String>())
     val profileUpdateState = _profileUpdateState.asStateFlow()
 
     // Banners & Categories
@@ -126,6 +139,26 @@ class ShoppingAppViewModel @Inject constructor(
 
     private val _addToFavState = MutableStateFlow(ResponseState<String>())
     val addToFavState = _addToFavState.asStateFlow()
+
+    // Orders & Admin Action States
+    internal val _placeOrderState = MutableStateFlow(ResponseState<String>())
+    val placeOrderState = _placeOrderState.asStateFlow()
+
+    internal val _userOrdersState = MutableStateFlow(ResponseState<List<com.example.shopping.domain.models.OrderDataModel>>())
+    val userOrdersState = _userOrdersState.asStateFlow()
+
+    internal val _cancelOrderState = MutableStateFlow(ResponseState<String>())
+    val cancelOrderState = _cancelOrderState.asStateFlow()
+
+    internal val _adminActionState = MutableStateFlow(ResponseState<String>())
+    val adminActionState = _adminActionState.asStateFlow()
+
+    // Delete Account & Google Sign In States
+    internal val _deleteAccountState = MutableStateFlow(ResponseState<String>())
+    val deleteAccountState = _deleteAccountState.asStateFlow()
+
+    internal val _googleSignInState = MutableStateFlow(ResponseState<String>())
+    val googleSignInState = _googleSignInState.asStateFlow()
 
     init {
         loadHomeData()
@@ -163,6 +196,10 @@ class ShoppingAppViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun resetLoginState() {
+        _loginState.value = ResponseState()
     }
 
     fun fetchUserProfile(uid: String) {
@@ -269,7 +306,6 @@ class ShoppingAppViewModel @Inject constructor(
         val isAlreadyFav = currentFavs.any { it.productId == product.productId }
 
         if (isAlreadyFav) {
-            // Optimistically untick favorite instantly
             _wishlistState.value = ResponseState(data = currentFavs.filter { it.productId != product.productId })
             viewModelScope.launch {
                 removeFromFavUseCase.removeFromFav(product.productId).collectLatest { result ->
@@ -289,7 +325,6 @@ class ShoppingAppViewModel @Inject constructor(
                 }
             }
         } else {
-            // Optimistically tick favorite instantly
             val updated = currentFavs + product
             _wishlistState.value = ResponseState(data = updated)
             viewModelScope.launch {
@@ -345,86 +380,6 @@ class ShoppingAppViewModel @Inject constructor(
     }
 
 
-
-    // Delete Account State
-    private val _deleteAccountState = MutableStateFlow(ResponseState<String>())
-    val deleteAccountState = _deleteAccountState.asStateFlow()
-
-    // Google Sign In State
-    private val _googleSignInState = MutableStateFlow(ResponseState<String>())
-    val googleSignInState = _googleSignInState.asStateFlow()
-
-    fun loginWithGoogleToken(idToken: String) {
-        viewModelScope.launch {
-            loginWithGoogleUseCase.loginWithGoogle(idToken).collectLatest { result ->
-                when (result) {
-                    is ResultState.Loading -> _googleSignInState.value = ResponseState(isLoading = true)
-                    is ResultState.Success -> _googleSignInState.value = ResponseState(data = result.data)
-                    is ResultState.Error -> _googleSignInState.value = ResponseState(errorMessage = result.message)
-                }
-            }
-        }
-    }
-
-    fun deleteAccount(uid: String, password: String = "") {
-        viewModelScope.launch {
-            deleteUserAccountUseCase.deleteUser(uid, password).collectLatest { result ->
-                when (result) {
-                    is ResultState.Loading -> _deleteAccountState.value = ResponseState(isLoading = true)
-                    is ResultState.Success -> {
-                        _deleteAccountState.value = ResponseState(data = result.data)
-                        _userProfileState.value = ResponseState()
-                    }
-                    is ResultState.Error -> _deleteAccountState.value = ResponseState(errorMessage = result.message)
-                }
-            }
-        }
-    }
-
-
-    fun updateProfile(userDataParent: UserDataParent) {
-        viewModelScope.launch {
-            updateUserDataUseCase.updateUserData(userDataParent).collectLatest { result ->
-                when (result) {
-                    is ResultState.Loading -> _profileUpdateState.value = ResponseState(isLoading = true)
-                    is ResultState.Success -> {
-                        _profileUpdateState.value = ResponseState(data = result.data)
-                        fetchUserProfile(userDataParent.nodeId)
-                    }
-                    is ResultState.Error -> _profileUpdateState.value = ResponseState(errorMessage = result.message)
-                }
-            }
-        }
-    }
-
-    fun uploadProfileImage(uri: android.net.Uri, uid: String, currentData: UserData) {
-        viewModelScope.launch {
-            userProfileImageUseCase.userProfileImage(uri).collectLatest { result ->
-                when (result) {
-                    is ResultState.Loading -> _profileUpdateState.value = ResponseState(isLoading = true)
-                    is ResultState.Success -> {
-                        val updatedUserData = currentData.copy(profileImage = result.data ?: "")
-                        updateProfile(UserDataParent(nodeId = uid, userData = updatedUserData))
-                    }
-                    is ResultState.Error -> _profileUpdateState.value = ResponseState(errorMessage = result.message)
-                }
-            }
-        }
-    }
-
-
-    fun resetDeleteAccountState() {
-        _deleteAccountState.value = ResponseState()
-    }
-
-    fun resetGoogleSignInState() {
-        _googleSignInState.value = ResponseState()
-    }
-
-    fun resetProfileUpdateState() {
-        _profileUpdateState.value = ResponseState()
-    }
-
     fun resetAddToCartState() {
         _addToCartState.value = ResponseState()
     }
@@ -432,264 +387,4 @@ class ShoppingAppViewModel @Inject constructor(
     fun resetAddToFavState() {
         _addToFavState.value = ResponseState()
     }
-
-    private val _placeOrderState = MutableStateFlow(ResponseState<String>())
-    val placeOrderState = _placeOrderState.asStateFlow()
-
-    fun placeOrder(
-        productId: String,
-        quantity: Int,
-        address: String,
-        paymentMethod: String,
-        onSuccess: () -> Unit = {}
-    ) {
-        viewModelScope.launch {
-            placeOrderUseCase.placeOrder(productId, quantity, address, paymentMethod).collectLatest { result ->
-                when (result) {
-                    is ResultState.Loading -> _placeOrderState.value = ResponseState(isLoading = true)
-                    is ResultState.Success -> {
-                        _placeOrderState.value = ResponseState(data = result.data)
-                        loadHomeData()
-                        fetchProductById(productId)
-                        onSuccess()
-                    }
-                    is ResultState.Error -> _placeOrderState.value = ResponseState(errorMessage = result.message)
-                }
-            }
-        }
-    }
-
-    private val _userOrdersState = MutableStateFlow(ResponseState<List<com.example.shopping.domain.models.OrderDataModel>>())
-    val userOrdersState = _userOrdersState.asStateFlow()
-
-    private val _cancelOrderState = MutableStateFlow(ResponseState<String>())
-    val cancelOrderState = _cancelOrderState.asStateFlow()
-
-    fun fetchUserOrders() {
-        viewModelScope.launch {
-            getUserOrdersUseCase.getUserOrders().collectLatest { result ->
-                when (result) {
-                    is ResultState.Loading -> _userOrdersState.value = ResponseState(isLoading = true)
-                    is ResultState.Success -> _userOrdersState.value = ResponseState(data = result.data)
-                    is ResultState.Error -> _userOrdersState.value = ResponseState(errorMessage = result.message)
-                }
-            }
-        }
-    }
-
-    fun cancelOrder(orderId: String, productId: String, quantity: Int, onSuccess: () -> Unit = {}) {
-        viewModelScope.launch {
-            cancelOrderUseCase.cancelOrder(orderId, productId, quantity).collectLatest { result ->
-                when (result) {
-                    is ResultState.Loading -> _cancelOrderState.value = ResponseState(isLoading = true)
-                    is ResultState.Success -> {
-                        _cancelOrderState.value = ResponseState(data = result.data)
-                        fetchUserOrders()
-                        loadHomeData()
-                        if (productId.isNotBlank()) fetchProductById(productId)
-                        onSuccess()
-                    }
-                    is ResultState.Error -> _cancelOrderState.value = ResponseState(errorMessage = result.message)
-                }
-            }
-        }
-    }
-
-    fun resetOrderHistory(onSuccess: () -> Unit = {}) {
-        viewModelScope.launch {
-            resetUserOrdersUseCase.resetUserOrders().collectLatest { result ->
-                if (result is ResultState.Success) {
-                    fetchUserOrders()
-                    onSuccess()
-                }
-            }
-        }
-    }
-
-    private val _adminActionState = MutableStateFlow(ResponseState<String>())
-    val adminActionState = _adminActionState.asStateFlow()
-
-    fun addProduct(product: ProductDataModels, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
-        viewModelScope.launch {
-            addProductUseCase.addProduct(product).collectLatest { result ->
-                when (result) {
-                    is ResultState.Loading -> _adminActionState.value = ResponseState(isLoading = true)
-                    is ResultState.Success -> {
-                        _adminActionState.value = ResponseState(data = result.data)
-                        loadHomeData()
-                        fetchProducts()
-                        onSuccess()
-                    }
-                    is ResultState.Error -> {
-                        _adminActionState.value = ResponseState(errorMessage = result.message)
-                        onError(result.message)
-                    }
-                }
-            }
-        }
-    }
-
-    fun updateProduct(product: ProductDataModels, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
-        viewModelScope.launch {
-            updateProductUseCase.updateProduct(product).collectLatest { result ->
-                when (result) {
-                    is ResultState.Loading -> _adminActionState.value = ResponseState(isLoading = true)
-                    is ResultState.Success -> {
-                        _adminActionState.value = ResponseState(data = result.data)
-                        loadHomeData()
-                        fetchProducts()
-                        if (product.productId.isNotBlank()) fetchProductById(product.productId)
-                        onSuccess()
-                    }
-                    is ResultState.Error -> {
-                        _adminActionState.value = ResponseState(errorMessage = result.message)
-                        onError(result.message)
-                    }
-                }
-            }
-        }
-    }
-
-    fun deleteProduct(productId: String, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
-        viewModelScope.launch {
-            deleteProductUseCase.deleteProduct(productId).collectLatest { result ->
-                when (result) {
-                    is ResultState.Loading -> _adminActionState.value = ResponseState(isLoading = true)
-                    is ResultState.Success -> {
-                        _adminActionState.value = ResponseState(data = result.data)
-                        loadHomeData()
-                        fetchProducts()
-                        onSuccess()
-                    }
-                    is ResultState.Error -> {
-                        _adminActionState.value = ResponseState(errorMessage = result.message)
-                        onError(result.message)
-                    }
-                }
-            }
-        }
-    }
-
-    // Category Management
-    fun addCategory(category: CategoryDataModels, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
-        viewModelScope.launch {
-            addCategoryUseCase.addCategory(category).collectLatest { result ->
-                when (result) {
-                    is ResultState.Loading -> _adminActionState.value = ResponseState(isLoading = true)
-                    is ResultState.Success -> {
-                        _adminActionState.value = ResponseState(data = result.data)
-                        loadHomeData()
-                        fetchCategories()
-                        onSuccess()
-                    }
-                    is ResultState.Error -> {
-                        _adminActionState.value = ResponseState(errorMessage = result.message)
-                        onError(result.message)
-                    }
-                }
-            }
-        }
-    }
-
-    fun updateCategory(categoryId: String, category: CategoryDataModels, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
-        viewModelScope.launch {
-            updateCategoryUseCase.updateCategory(categoryId, category).collectLatest { result ->
-                when (result) {
-                    is ResultState.Loading -> _adminActionState.value = ResponseState(isLoading = true)
-                    is ResultState.Success -> {
-                        _adminActionState.value = ResponseState(data = result.data)
-                        loadHomeData()
-                        fetchCategories()
-                        onSuccess()
-                    }
-                    is ResultState.Error -> {
-                        _adminActionState.value = ResponseState(errorMessage = result.message)
-                        onError(result.message)
-                    }
-                }
-            }
-        }
-    }
-
-    fun deleteCategory(categoryId: String, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
-        viewModelScope.launch {
-            deleteCategoryUseCase.deleteCategory(categoryId).collectLatest { result ->
-                when (result) {
-                    is ResultState.Loading -> _adminActionState.value = ResponseState(isLoading = true)
-                    is ResultState.Success -> {
-                        _adminActionState.value = ResponseState(data = result.data)
-                        loadHomeData()
-                        fetchCategories()
-                        onSuccess()
-                    }
-                    is ResultState.Error -> {
-                        _adminActionState.value = ResponseState(errorMessage = result.message)
-                        onError(result.message)
-                    }
-                }
-            }
-        }
-    }
-
-    // Banner Management
-    fun addBanner(banner: BannerDataModels, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
-        viewModelScope.launch {
-            addBannerUseCase.addBanner(banner).collectLatest { result ->
-                when (result) {
-                    is ResultState.Loading -> _adminActionState.value = ResponseState(isLoading = true)
-                    is ResultState.Success -> {
-                        _adminActionState.value = ResponseState(data = result.data)
-                        loadHomeData()
-                        fetchBanners()
-                        onSuccess()
-                    }
-                    is ResultState.Error -> {
-                        _adminActionState.value = ResponseState(errorMessage = result.message)
-                        onError(result.message)
-                    }
-                }
-            }
-        }
-    }
-
-    fun updateBanner(bannerId: String, banner: BannerDataModels, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
-        viewModelScope.launch {
-            updateBannerUseCase.updateBanner(bannerId, banner).collectLatest { result ->
-                when (result) {
-                    is ResultState.Loading -> _adminActionState.value = ResponseState(isLoading = true)
-                    is ResultState.Success -> {
-                        _adminActionState.value = ResponseState(data = result.data)
-                        loadHomeData()
-                        fetchBanners()
-                        onSuccess()
-                    }
-                    is ResultState.Error -> {
-                        _adminActionState.value = ResponseState(errorMessage = result.message)
-                        onError(result.message)
-                    }
-                }
-            }
-        }
-    }
-
-    fun deleteBanner(bannerId: String, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
-        viewModelScope.launch {
-            deleteBannerUseCase.deleteBanner(bannerId).collectLatest { result ->
-                when (result) {
-                    is ResultState.Loading -> _adminActionState.value = ResponseState(isLoading = true)
-                    is ResultState.Success -> {
-                        _adminActionState.value = ResponseState(data = result.data)
-                        loadHomeData()
-                        fetchBanners()
-                        onSuccess()
-                    }
-                    is ResultState.Error -> {
-                        _adminActionState.value = ResponseState(errorMessage = result.message)
-                        onError(result.message)
-                    }
-                }
-            }
-        }
-    }
 }
-

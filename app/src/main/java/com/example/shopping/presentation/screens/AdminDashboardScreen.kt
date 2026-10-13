@@ -45,23 +45,17 @@ import androidx.compose.ui.unit.sp
 import com.example.shopping.domain.models.BannerDataModels
 import com.example.shopping.domain.models.CategoryDataModels
 import com.example.shopping.domain.models.ProductDataModels
-import com.example.shopping.presentation.screens.admin.AdminActionFeedbackDialog
 import com.example.shopping.presentation.screens.admin.AdminAddProductTab
 import com.example.shopping.presentation.screens.admin.AdminBannersTab
 import com.example.shopping.presentation.screens.admin.AdminCategoriesTab
-import com.example.shopping.presentation.screens.admin.AdminDeleteBannerDialog
-import com.example.shopping.presentation.screens.admin.AdminDeleteProductDialog
-import com.example.shopping.presentation.screens.admin.AdminDuplicateWarningDialog
-import com.example.shopping.presentation.screens.admin.AdminEditBannerDialog
-import com.example.shopping.presentation.screens.admin.AdminEditCategoryDialog
-import com.example.shopping.presentation.screens.admin.AdminEditProductDialog
 import com.example.shopping.presentation.screens.admin.AdminLoginSection
 import com.example.shopping.presentation.screens.admin.AdminProductsListTab
-import com.example.shopping.presentation.screens.admin.KeyValRow
 import com.example.shopping.presentation.utils.CropAspectRatio
 import com.example.shopping.presentation.utils.ImageCropUtils
-import com.example.shopping.presentation.utils.ProductImageCropDialog
 import com.example.shopping.presentation.viewModels.ShoppingAppViewModel
+import com.example.shopping.presentation.viewModels.addBanner
+import com.example.shopping.presentation.viewModels.addCategory
+import com.example.shopping.presentation.viewModels.addProduct
 import com.example.shopping.ui.theme.DarkBg
 import com.example.shopping.ui.theme.DarkCard
 import com.example.shopping.ui.theme.OrangePrimary
@@ -166,76 +160,16 @@ fun AdminDashboardScreen(
                 .navigationBarsPadding()
         ) {
             // Header
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onBackClick, modifier = Modifier.size(36.dp)) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = TextWhite)
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Owner Console",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 19.sp,
-                        color = TextWhite
-                    )
-                }
-
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = SuccessGreen.copy(alpha = 0.15f),
-                    border = BorderStroke(1.dp, SuccessGreen.copy(alpha = 0.4f))
-                ) {
-                    Text(
-                        text = "● Owner Authenticated",
-                        color = SuccessGreen,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                    )
-                }
-            }
+            AdminDashboardHeader(onBackClick = onBackClick)
 
             // 4 Navigation Tabs
-            ScrollableTabRow(
-                selectedTabIndex = selectedTab,
-                containerColor = DarkCard,
-                contentColor = OrangePrimary,
-                edgePadding = 16.dp,
-                indicator = { tabPositions ->
-                    TabRowDefaults.SecondaryIndicator(
-                        modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
-                        color = OrangePrimary,
-                        height = 3.dp
-                    )
-                }
-            ) {
-                Tab(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    text = { Text("➕ Add Product", fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Normal, color = if (selectedTab == 0) OrangePrimary else TextMuted) }
-                )
-                Tab(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    text = { Text("🛍️ Products (${productsList.size})", fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal, color = if (selectedTab == 1) OrangePrimary else TextMuted) }
-                )
-                Tab(
-                    selected = selectedTab == 2,
-                    onClick = { selectedTab = 2 },
-                    text = { Text("📁 Categories (${categoriesList.size})", fontWeight = if (selectedTab == 2) FontWeight.Bold else FontWeight.Normal, color = if (selectedTab == 2) OrangePrimary else TextMuted) }
-                )
-                Tab(
-                    selected = selectedTab == 3,
-                    onClick = { selectedTab = 3 },
-                    text = { Text("🖼️ Banners (${bannerList.size})", fontWeight = if (selectedTab == 3) FontWeight.Bold else FontWeight.Normal, color = if (selectedTab == 3) OrangePrimary else TextMuted) }
-                )
-            }
+            AdminDashboardTabRow(
+                selectedTab = selectedTab,
+                onTabSelected = { selectedTab = it },
+                productsCount = productsList.size,
+                categoriesCount = categoriesList.size,
+                bannersCount = bannerList.size
+            )
 
             when (selectedTab) {
                 0 -> {
@@ -375,178 +309,87 @@ fun AdminDashboardScreen(
         }
     }
 
-    // ==========================================
-    // ALERT DIALOGS
-    // ==========================================
-
-    AdminActionFeedbackDialog(
-        title = actionDialogTitle,
-        message = actionDialogMessage,
-        isSuccess = isSuccessDialog,
-        onDismiss = {
+    AdminDashboardDialogsHost(
+        viewModel = viewModel,
+        actionDialogTitle = actionDialogTitle,
+        actionDialogMessage = actionDialogMessage,
+        isSuccessDialog = isSuccessDialog,
+        onDismissActionDialog = {
             actionDialogTitle = null
             actionDialogMessage = null
-        }
-    )
-
-    AdminDuplicateWarningDialog(
-        message = duplicateWarningMessage,
-        onConfirm = {
-            duplicateWarningMessage = null
-            val prod = pendingDuplicateProduct
-            if (prod != null) {
-                viewModel.addProduct(
-                    product = prod,
-                    onSuccess = {
-                        actionDialogTitle = "Product Added! 🎉"
-                        actionDialogMessage = "Successfully created product in Firestore."
-                        isSuccessDialog = true
-                        prodImage = ""
-                        pendingDuplicateProduct = null
-                    },
-                    onError = { error ->
-                        actionDialogTitle = "Add Failed"
-                        actionDialogMessage = "Error: $error"
-                        isSuccessDialog = false
-                        pendingDuplicateProduct = null
-                    }
-                )
-            }
         },
-        onDismiss = {
+        duplicateWarningMessage = duplicateWarningMessage,
+        pendingDuplicateProduct = pendingDuplicateProduct,
+        onConfirmDuplicate = { prod ->
+            duplicateWarningMessage = null
+            viewModel.addProduct(
+                product = prod,
+                onSuccess = {
+                    actionDialogTitle = "Product Added! 🎉"
+                    actionDialogMessage = "Successfully created product in Firestore."
+                    isSuccessDialog = true
+                    prodImage = ""
+                    pendingDuplicateProduct = null
+                },
+                onError = { error ->
+                    actionDialogTitle = "Add Failed"
+                    actionDialogMessage = "Error: $error"
+                    isSuccessDialog = false
+                    pendingDuplicateProduct = null
+                }
+            )
+        },
+        onDismissDuplicate = {
             duplicateWarningMessage = null
             pendingDuplicateProduct = null
-        }
-    )
-
-    AdminEditProductDialog(
-        product = editingProduct,
-        editImage = editProductImage,
-        onEditImageChange = { editProductImage = it },
+        },
+        editingProduct = editingProduct,
+        editProductImage = editProductImage,
+        onEditProductImageChange = { editProductImage = it },
         predefinedCategories = predefinedCategories,
         predefinedGenders = predefinedGenders,
-        onRequestCrop = { url ->
+        onRequestCropEditProduct = { url ->
             cropTarget = "edit_product"
             cropImageUrl = url
             cropBitmap = null
             cropDialogRatio = CropAspectRatio.SQUARE_1_1
             cropDialogTitle = "Crop & Precision Zoom - Edit Product"
         },
-        onRequestPickAndCrop = {
+        onRequestPickAndCropEditProduct = {
             cropTarget = "edit_product"
             cropDialogRatio = CropAspectRatio.SQUARE_1_1
             cropDialogTitle = "Pick & Crop Product Image"
             galleryCropLauncher.launch("image/*")
         },
-        onDismiss = { editingProduct = null },
-        onSaveProduct = { updated ->
-            viewModel.updateProduct(
-                product = updated,
-                onSuccess = {
-                    Toast.makeText(context, "✅ Product Updated in Firestore!", Toast.LENGTH_SHORT).show()
-                    editingProduct = null
-                },
-                onError = { error ->
-                    Toast.makeText(context, "❌ Update Error: $error", Toast.LENGTH_LONG).show()
-                }
-            )
-        }
-    )
-
-    AdminDeleteProductDialog(
-        productId = deletingProductId,
-        onDismiss = { deletingProductId = null },
-        onConfirm = { id ->
-            deletingProductId = null
-            viewModel.deleteProduct(
-                productId = id,
-                onSuccess = {
-                    Toast.makeText(context, "🗑️ Product Deleted Successfully!", Toast.LENGTH_SHORT).show()
-                },
-                onError = { error ->
-                    Toast.makeText(context, "❌ Delete Error: $error", Toast.LENGTH_LONG).show()
-                }
-            )
-        }
-    )
-
-    AdminEditCategoryDialog(
-        category = editingCategory,
-        onDismiss = { editingCategory = null },
-        onSaveCategory = { updated ->
-            viewModel.updateCategory(
-                categoryId = updated.categoryId,
-                category = updated,
-                onSuccess = {
-                    Toast.makeText(context, "✅ Category Updated in Firestore!", Toast.LENGTH_SHORT).show()
-                    editingCategory = null
-                },
-                onError = { error ->
-                    Toast.makeText(context, "❌ Error: $error", Toast.LENGTH_LONG).show()
-                }
-            )
-        }
-    )
-
-    AdminEditBannerDialog(
-        banner = editingBanner,
-        onDismiss = { editingBanner = null },
-        onSaveBanner = { updated ->
-            viewModel.updateBanner(
-                bannerId = updated.bannerId,
-                banner = updated,
-                onSuccess = {
-                    Toast.makeText(context, "✅ Banner Updated in Firestore!", Toast.LENGTH_SHORT).show()
-                    editingBanner = null
-                },
-                onError = { error ->
-                    Toast.makeText(context, "❌ Error: $error", Toast.LENGTH_LONG).show()
-                }
-            )
-        }
-    )
-
-    AdminDeleteBannerDialog(
-        banner = deletingBanner,
-        onDismiss = { deletingBanner = null },
-        onConfirm = { ban ->
-            deletingBanner = null
-            viewModel.deleteBanner(
-                bannerId = ban.bannerId,
-                onSuccess = {
-                    Toast.makeText(context, "🗑️ Banner Deleted Successfully!", Toast.LENGTH_SHORT).show()
-                },
-                onError = { error ->
-                    Toast.makeText(context, "❌ Delete Error: $error", Toast.LENGTH_LONG).show()
-                }
-            )
-        }
-    )
-
-    // Render Precision Crop Modal Dialog
-    if (cropTarget != null && (cropImageUrl.isNotBlank() || cropBitmap != null)) {
-        ProductImageCropDialog(
-            initialBitmap = cropBitmap,
-            imageUrl = cropImageUrl,
-            dialogTitle = cropDialogTitle,
-            initialRatio = cropDialogRatio,
-            onDismissRequest = {
-                cropTarget = null
-                cropBitmap = null
-                cropImageUrl = ""
-            },
-            onCropConfirmed = { _, base64Url ->
-                when (cropTarget) {
-                    "add_product" -> prodImage = base64Url
-                    "edit_product" -> editProductImage = base64Url
-                    "add_category" -> newCatImage = base64Url
-                    "add_banner" -> newBanImage = base64Url
-                }
-                cropTarget = null
-                cropBitmap = null
-                cropImageUrl = ""
-                Toast.makeText(context, "Framing & Crop Applied! 🎉", Toast.LENGTH_SHORT).show()
+        onDismissEditProduct = { editingProduct = null },
+        deletingProductId = deletingProductId,
+        onDismissDeleteProduct = { deletingProductId = null },
+        editingCategory = editingCategory,
+        onDismissEditCategory = { editingCategory = null },
+        editingBanner = editingBanner,
+        onDismissEditBanner = { editingBanner = null },
+        deletingBanner = deletingBanner,
+        onDismissDeleteBanner = { deletingBanner = null },
+        cropTarget = cropTarget,
+        cropImageUrl = cropImageUrl,
+        cropBitmap = cropBitmap,
+        cropDialogRatio = cropDialogRatio,
+        cropDialogTitle = cropDialogTitle,
+        onDismissCrop = {
+            cropTarget = null
+            cropBitmap = null
+            cropImageUrl = ""
+        },
+        onCropConfirmed = { target, base64Url ->
+            when (target) {
+                "add_product" -> prodImage = base64Url
+                "edit_product" -> editProductImage = base64Url
+                "add_category" -> newCatImage = base64Url
+                "add_banner" -> newBanImage = base64Url
             }
-        )
-    }
+            cropTarget = null
+            cropBitmap = null
+            cropImageUrl = ""
+        }
+    )
 }

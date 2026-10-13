@@ -3,30 +3,22 @@ package com.example.shopping.presentation.utils
 import android.graphics.Bitmap
 import android.graphics.Rect
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Refresh
@@ -38,9 +30,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -54,15 +43,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -70,7 +53,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.shopping.ui.theme.ButtonTextColor
 import com.example.shopping.ui.theme.DarkCard
-import com.example.shopping.ui.theme.DarkCardSecondary
 import com.example.shopping.ui.theme.DarkInputBorder
 import com.example.shopping.ui.theme.OrangePrimary
 import com.example.shopping.ui.theme.TextMuted
@@ -78,7 +60,6 @@ import com.example.shopping.ui.theme.TextWhite
 import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.math.roundToInt
 
 enum class CropAspectRatio(val label: String, val ratio: Float) {
     ORIGINAL("Original Fit", -1.0f),
@@ -95,7 +76,7 @@ fun ProductImageCropDialog(
     dialogTitle: String = "Image Crop & Precision Zoom",
     initialRatio: CropAspectRatio = CropAspectRatio.ORIGINAL,
     onDismissRequest: () -> Unit,
-    onCropConfirmed: (Bitmap, String) -> Unit // (croppedBitmap, base64Url)
+    onCropConfirmed: (Bitmap, String) -> Unit
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -109,7 +90,6 @@ fun ProductImageCropDialog(
     var offset by remember { mutableStateOf(Offset.Zero) }
     var containerSize by remember { mutableStateOf(IntSize.Zero) }
 
-    // Load bitmap from URL or Base64
     LaunchedEffect(imageUrl, initialBitmap) {
         if (initialBitmap != null) {
             activeBitmap = initialBitmap
@@ -175,7 +155,7 @@ fun ProductImageCropDialog(
                                 color = TextWhite
                             )
                             Text(
-                                text = "Drag to pan • Pinch or use slider to zoom",
+                                text = "Drag to pan - Pinch or use slider to zoom",
                                 fontSize = 11.sp,
                                 color = TextMuted
                             )
@@ -193,37 +173,19 @@ fun ProductImageCropDialog(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    // Aspect Ratio Selector Pills
-                    LazyRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(CropAspectRatio.values()) { ratio ->
-                            val isSelected = selectedRatio == ratio
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = if (isSelected) OrangePrimary else DarkCardSecondary,
-                                border = if (!isSelected) BorderStroke(1.dp, DarkInputBorder) else null,
-                                modifier = Modifier.clickable {
-                                    selectedRatio = ratio
-                                    scale = 1f
-                                    offset = Offset.Zero
-                                }
-                            ) {
-                                Text(
-                                    text = ratio.label,
-                                    color = if (isSelected) ButtonTextColor else TextWhite,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                    fontSize = 11.sp,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                                )
-                            }
+                    // Aspect Ratio Selector
+                    CropAspectRatioSelector(
+                        selectedRatio = selectedRatio,
+                        onRatioSelected = { ratio ->
+                            selectedRatio = ratio
+                            scale = 1f
+                            offset = Offset.Zero
                         }
-                    }
+                    )
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Dedicated Crop Viewport
+                    // Crop Viewport
                     val currentBmp = activeBitmap
                     if (isLoadingImage) {
                         Box(
@@ -241,91 +203,22 @@ fun ProductImageCropDialog(
                             }
                         }
                     } else if (currentBmp != null) {
-                        val imageBitmap = remember(currentBmp) { currentBmp.asImageBitmap() }
-
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(270.dp)
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(Color(0xFF0C0D12))
-                                .onSizeChanged { containerSize = it }
-                                .pointerInput(Unit) {
-                                    detectTransformGestures { _, pan, zoom, _ ->
-                                        scale = (scale * zoom).coerceIn(0.5f, 5.0f)
-                                        offset += pan
-                                    }
-                                },
-                            contentAlignment = Alignment.Center
+                                .background(Color(0xFF0A0A0E))
                         ) {
-                            if (containerSize.width > 0 && containerSize.height > 0) {
-                                Canvas(modifier = Modifier.fillMaxSize()) {
-                                    val canvasW = size.width
-                                    val canvasH = size.height
-
-                                    // Target Crop Frame computation
-                                    val targetRatio = if (selectedRatio.ratio > 0f) {
-                                        selectedRatio.ratio
-                                    } else {
-                                        currentBmp.width.toFloat() / currentBmp.height.toFloat()
-                                    }
-
-                                    val maxFrameW = canvasW * 0.88f
-                                    val maxFrameH = canvasH * 0.88f
-
-                                    var frameW = maxFrameW
-                                    var frameH = frameW / targetRatio
-                                    if (frameH > maxFrameH) {
-                                        frameH = maxFrameH
-                                        frameW = frameH * targetRatio
-                                    }
-
-                                    val frameLeft = (canvasW - frameW) / 2f
-                                    val frameTop = (canvasH - frameH) / 2f
-
-                                    // Base scale to fit image to frame
-                                    val baseScale = max(
-                                        frameW / currentBmp.width.toFloat(),
-                                        frameH / currentBmp.height.toFloat()
-                                    )
-                                    val totalScale = baseScale * scale
-                                    val drawnW = currentBmp.width * totalScale
-                                    val drawnH = currentBmp.height * totalScale
-
-                                    val imgLeft = (canvasW - drawnW) / 2f + offset.x
-                                    val imgTop = (canvasH - drawnH) / 2f + offset.y
-
-                                    // 1. Draw Image
-                                    drawImage(
-                                        image = imageBitmap,
-                                        dstOffset = IntOffset(imgLeft.roundToInt(), imgTop.roundToInt()),
-                                        dstSize = IntSize(drawnW.roundToInt(), drawnH.roundToInt())
-                                    )
-
-                                    // 2. Dark Overlay outside Crop Frame
-                                    val overlayColor = Color.Black.copy(alpha = 0.60f)
-                                    drawRect(color = overlayColor, topLeft = Offset.Zero, size = Size(canvasW, frameTop))
-                                    drawRect(color = overlayColor, topLeft = Offset(0f, frameTop + frameH), size = Size(canvasW, canvasH - (frameTop + frameH)))
-                                    drawRect(color = overlayColor, topLeft = Offset(0f, frameTop), size = Size(frameLeft, frameH))
-                                    drawRect(color = overlayColor, topLeft = Offset(frameLeft + frameW, frameTop), size = Size(canvasW - (frameLeft + frameW), frameH))
-
-                                    // 3. Frame Border (Orange)
-                                    drawRect(
-                                        color = OrangePrimary,
-                                        topLeft = Offset(frameLeft, frameTop),
-                                        size = Size(frameW, frameH),
-                                        style = Stroke(width = 2.5.dp.toPx())
-                                    )
-
-                                    // 4. Rule of thirds grid lines
-                                    val gridColor = Color.White.copy(alpha = 0.25f)
-                                    val gridStroke = Stroke(width = 1.dp.toPx())
-                                    drawLine(color = gridColor, start = Offset(frameLeft + frameW / 3f, frameTop), end = Offset(frameLeft + frameW / 3f, frameTop + frameH), strokeWidth = gridStroke.width)
-                                    drawLine(color = gridColor, start = Offset(frameLeft + (frameW * 2f) / 3f, frameTop), end = Offset(frameLeft + (frameW * 2f) / 3f, frameTop + frameH), strokeWidth = gridStroke.width)
-                                    drawLine(color = gridColor, start = Offset(frameLeft, frameTop + frameH / 3f), end = Offset(frameLeft + frameW, frameTop + frameH / 3f), strokeWidth = gridStroke.width)
-                                    drawLine(color = gridColor, start = Offset(frameLeft, frameTop + (frameH * 2f) / 3f), end = Offset(frameLeft + frameW, frameTop + (frameH * 2f) / 3f), strokeWidth = gridStroke.width)
-                                }
-                            }
+                            CropCanvasView(
+                                currentBmp = currentBmp,
+                                selectedRatio = selectedRatio,
+                                scale = scale,
+                                onScaleChange = { scale = it },
+                                offset = offset,
+                                onOffsetChange = { offset = it },
+                                onContainerSizeChanged = { containerSize = it }
+                            )
                         }
                     } else {
                         Box(
@@ -347,70 +240,11 @@ fun ProductImageCropDialog(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // Dedicated Precision Zoom Section
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = DarkCardSecondary,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(modifier = Modifier.padding(10.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "Precision Zoom",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextWhite
-                                )
-                                Surface(
-                                    shape = RoundedCornerShape(6.dp),
-                                    color = OrangePrimary.copy(alpha = 0.2f)
-                                ) {
-                                    Text(
-                                        text = "${(scale * 100).roundToInt()}%",
-                                        color = OrangePrimary,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 11.sp,
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                    )
-                                }
-                            }
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                IconButton(
-                                    onClick = { scale = (scale - 0.15f).coerceIn(0.5f, 5.0f) },
-                                    modifier = Modifier.size(32.dp)
-                                ) {
-                                    Text(text = "-", color = TextWhite, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                                }
-
-                                Slider(
-                                    value = scale,
-                                    onValueChange = { scale = it },
-                                    valueRange = 0.5f..5.0f,
-                                    modifier = Modifier.weight(1f),
-                                    colors = SliderDefaults.colors(
-                                        thumbColor = OrangePrimary,
-                                        activeTrackColor = OrangePrimary,
-                                        inactiveTrackColor = DarkInputBorder
-                                    )
-                                )
-
-                                IconButton(
-                                    onClick = { scale = (scale + 0.15f).coerceIn(0.5f, 5.0f) },
-                                    modifier = Modifier.size(32.dp)
-                                ) {
-                                    Icon(imageVector = Icons.Default.Add, contentDescription = "Zoom In", tint = TextWhite, modifier = Modifier.size(18.dp))
-                                }
-                            }
-                        }
-                    }
+                    // Zoom Controls
+                    CropZoomControls(
+                        scale = scale,
+                        onScaleChange = { scale = it }
+                    )
 
                     Spacer(modifier = Modifier.height(14.dp))
 
@@ -473,7 +307,6 @@ fun ProductImageCropDialog(
                                     val imgLeft = (canvasW - drawnW) / 2f + offset.x
                                     val imgTop = (canvasH - drawnH) / 2f + offset.y
 
-                                    // Exact pixel mapping from canvas to bitmap
                                     val cropXInBmp = ((frameLeft - imgLeft) / totalScale).toInt().coerceIn(0, bmp.width - 1)
                                     val cropYInBmp = ((frameTop - imgTop) / totalScale).toInt().coerceIn(0, bmp.height - 1)
                                     val cropWInBmp = ((frameW / totalScale).toInt()).coerceIn(1, bmp.width - cropXInBmp)

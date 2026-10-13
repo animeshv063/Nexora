@@ -1,44 +1,21 @@
 package com.example.shopping.presentation.screens
 
 import android.widget.Toast
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -55,18 +32,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.shopping.domain.models.CartDataModels
 import com.example.shopping.domain.models.ProductDataModels
+import com.example.shopping.presentation.utils.RatingHelper
 import com.example.shopping.presentation.utils.SmartAsyncImage
 import com.example.shopping.presentation.viewModels.ShoppingAppViewModel
-import com.example.shopping.ui.theme.AccentCoral
-import com.example.shopping.ui.theme.ButtonTextColor
 import com.example.shopping.ui.theme.DarkBg
-import com.example.shopping.ui.theme.DarkCard
-import com.example.shopping.ui.theme.DarkCardSecondary
 import com.example.shopping.ui.theme.DarkInputBorder
 import com.example.shopping.ui.theme.OrangePrimary
 import com.example.shopping.ui.theme.SuccessGreen
@@ -119,7 +91,6 @@ fun ProductDetailScreen(
     }
 
     var sizeQuantities by remember { mutableStateOf(mapOf<String, Int>()) }
-    val currentQuantity = sizeQuantities[selectedSize] ?: 0
     val activeSelections = sizeQuantities.filter { it.value > 0 }
     val totalSelectedUnits = activeSelections.values.sum()
 
@@ -179,532 +150,202 @@ fun ProductDetailScreen(
                     .background(DarkBg)
                     .padding(horizontal = 20.dp, vertical = 16.dp)
             ) {
-                    // Category, Gender, Rating & Stock Status Badges
+                // Category, Gender, Rating & Stock Status Badges
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f, fill = false)
                     ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f, fill = false)
-                        ) {
-                            Surface(
-                                shape = RoundedCornerShape(6.dp),
-                                color = OrangePrimary.copy(alpha = 0.15f)
-                            ) {
-                                Text(
-                                    text = product.category.ifEmpty { "General" },
-                                    color = OrangePrimary,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    maxLines = 1,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                )
-                            }
-
-                            // Gender Badge (Men / Women / Unisex)
-                            Surface(
-                                shape = RoundedCornerShape(6.dp),
-                                color = Color(0xFF6366F1).copy(alpha = 0.15f)
-                            ) {
-                                Text(
-                                    text = when (product.gender) {
-                                        "Women" -> "👩 Women"
-                                        "Unisex" -> "✨ Unisex"
-                                        else -> "👨 Men"
-                                    },
-                                    color = Color(0xFFA5B4FC),
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    maxLines = 1,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp)
-                                )
-                            }
-
-                            // Dynamic Rating Chip
-                            val prodRating = remember(product.productId) { com.example.shopping.presentation.utils.RatingHelper.getRatingForProduct(product.productId) }
-                            Surface(
-                                shape = RoundedCornerShape(6.dp),
-                                color = Color(0xFFFBBF24).copy(alpha = 0.15f)
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp)
-                                ) {
-                                    Text(
-                                        text = "$prodRating ★",
-                                        color = Color(0xFFFBBF24),
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        // Stock Availability Indicator
                         Surface(
                             shape = RoundedCornerShape(6.dp),
-                            color = if (product.availableUnits > 0) SuccessGreen.copy(alpha = 0.15f) else Color(0xFFEF4444).copy(alpha = 0.15f)
+                            color = OrangePrimary.copy(alpha = 0.15f)
                         ) {
                             Text(
-                                text = if (product.availableUnits > 0) "In Stock: ${product.availableUnits}" else "Out of Stock",
-                                color = if (product.availableUnits > 0) SuccessGreen else Color(0xFFEF4444),
+                                text = product.category.ifEmpty { "General" },
+                                color = OrangePrimary,
                                 fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.SemiBold,
                                 maxLines = 1,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
-                    }
 
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Text(
-                        text = product.name,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextWhite
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Price Section with Discount
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        val hasDiscount = product.finalPrice.isNotBlank() && product.finalPrice != product.price && product.finalPrice != "0"
-                        if (hasDiscount) {
+                        // Gender Badge (Men / Women / Unisex)
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = Color(0xFF6366F1).copy(alpha = 0.15f)
+                        ) {
                             Text(
-                                text = "₹${product.finalPrice}",
-                                fontSize = 22.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = OrangePrimary
-                            )
-                            Text(
-                                text = "₹${product.price}",
-                                fontSize = 16.sp,
-                                color = TextMuted,
-                                textDecoration = TextDecoration.LineThrough
-                            )
-                            val discountPercent = try {
-                                val orig = product.price.toDouble()
-                                val finalP = product.finalPrice.toDouble()
-                                (((orig - finalP) / orig) * 100).toInt()
-                            } catch (e: Exception) { 0 }
-                            if (discountPercent > 0) {
-                                Surface(
-                                    shape = RoundedCornerShape(4.dp),
-                                    color = OrangePrimary.copy(alpha = 0.2f)
-                                ) {
-                                    Text(
-                                        text = "$discountPercent% OFF",
-                                        color = OrangePrimary,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                    )
-                                }
-                            }
-                        } else {
-                            Text(
-                                text = "₹${product.price.ifEmpty { "0" }}",
-                                fontSize = 22.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = OrangePrimary
+                                text = when (product.gender) {
+                                    "Women" -> "👩 Women"
+                                    "Unisex" -> "✨ Unisex"
+                                    else -> "👨 Men"
+                                },
+                                color = Color(0xFFA5B4FC),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp)
                             )
                         }
-                    }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-                    HorizontalDivider(color = DarkInputBorder)
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Size Selector
-                    Text(
-                        text = if (sizes.size == 1 && sizes.first() == "Free Size") "Size" else "Select Size",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextWhite
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        items(sizes) { size ->
-                            val isSelected = selectedSize == size
-                            val sizeQty = sizeQuantities[size] ?: 0
-                            Surface(
-                                shape = RoundedCornerShape(10.dp),
-                                color = if (isSelected) OrangePrimary else DarkCardSecondary,
-                                border = if (sizeQty > 0 && !isSelected) BorderStroke(1.dp, OrangePrimary) else null,
-                                modifier = Modifier
-                                    .height(44.dp)
-                                    .clickable {
-                                        selectedSize = size
-                                    }
+                        // Dynamic Rating Chip
+                        val prodRating = remember(product.productId) { RatingHelper.getRatingForProduct(product.productId) }
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = Color(0xFFFBBF24).copy(alpha = 0.15f)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp)
                             ) {
-                                Box(
-                                    contentAlignment = Alignment.Center,
-                                    modifier = Modifier.padding(horizontal = if (size.length > 3) 14.dp else 12.dp)
-                                ) {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text(
-                                            text = size,
-                                            color = if (isSelected) ButtonTextColor else TextWhite,
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = if (size.length > 4) 12.sp else 13.sp
-                                        )
-                                        if (sizeQty > 0) {
-                                            Text(
-                                                text = "($sizeQty)",
-                                                color = if (isSelected) ButtonTextColor else OrangePrimary,
-                                                fontSize = 9.sp,
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Quantity Counter for selected size
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = "Quantity for Size ($selectedSize)",
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextWhite
-                            )
-                            if (product.availableUnits > 0) {
                                 Text(
-                                    text = "Limit: ${product.availableUnits} total units",
+                                    text = "$prodRating ★",
+                                    color = Color(0xFFFBBF24),
                                     fontSize = 11.sp,
-                                    color = TextMuted
+                                    fontWeight = FontWeight.Bold
                                 )
                             }
                         }
-
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(14.dp)
-                        ) {
-                            Surface(
-                                shape = CircleShape,
-                                color = if (currentQuantity > 0) DarkCardSecondary else DarkCardSecondary.copy(alpha = 0.4f),
-                                modifier = Modifier.size(34.dp).clickable {
-                                    if (currentQuantity > 1) {
-                                        sizeQuantities = sizeQuantities + (selectedSize to currentQuantity - 1)
-                                    } else if (currentQuantity == 1) {
-                                        sizeQuantities = sizeQuantities - selectedSize
-                                    }
-                                }
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Text(text = "-", fontSize = 18.sp, color = if (currentQuantity > 0) TextWhite else TextMuted, fontWeight = FontWeight.Bold)
-                                }
-                            }
-
-                            Text(
-                                text = "$currentQuantity",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextWhite
-                            )
-
-                            Surface(
-                                shape = CircleShape,
-                                color = if (product.availableUnits > 0 && totalSelectedUnits < product.availableUnits) DarkCardSecondary else DarkCardSecondary.copy(alpha = 0.4f),
-                                modifier = Modifier.size(34.dp).clickable {
-                                    if (product.availableUnits > 0) {
-                                        if (totalSelectedUnits < product.availableUnits) {
-                                            sizeQuantities = sizeQuantities + (selectedSize to currentQuantity + 1)
-                                        } else {
-                                            Toast.makeText(context, "Cannot add more. Only ${product.availableUnits} units available in stock!", Toast.LENGTH_SHORT).show()
-                                        }
-                                    } else {
-                                        Toast.makeText(context, "Item is out of stock!", Toast.LENGTH_SHORT).show()
-                                    }
-                                }
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Text(text = "+", fontSize = 18.sp, color = TextWhite, fontWeight = FontWeight.Bold)
-                                }
-                            }
-                        }
                     }
 
-                    // Real-time Selected Variations List (Appears when quantity >= 1 and disappears when 0)
-                    if (activeSelections.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(14.dp))
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = DarkCardSecondary,
-                            border = BorderStroke(1.dp, OrangePrimary.copy(alpha = 0.4f)),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "Added Items ($totalSelectedUnits units)",
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 13.sp,
-                                        color = OrangePrimary
-                                    )
-                                    Text(
-                                        text = "₹${(unitPrice * totalSelectedUnits).toInt()}",
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 14.sp,
-                                        color = TextWhite
-                                    )
-                                }
+                    Spacer(modifier = Modifier.width(8.dp))
 
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                activeSelections.forEach { (sz, qty) ->
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 4.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.weight(1f, fill = false),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Surface(
-                                                shape = RoundedCornerShape(6.dp),
-                                                color = OrangePrimary.copy(alpha = 0.15f),
-                                                modifier = Modifier.padding(end = 8.dp)
-                                            ) {
-                                                Text(
-                                                    text = sz,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    fontSize = 11.sp,
-                                                    color = OrangePrimary,
-                                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
-                                                )
-                                            }
-                                            Text(
-                                                text = product.name,
-                                                color = TextWhite,
-                                                fontSize = 13.sp,
-                                                maxLines = 1
-                                            )
-                                        }
-
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Text(
-                                                text = "x$qty (₹${(unitPrice * qty).toInt()})",
-                                                fontWeight = FontWeight.Medium,
-                                                color = TextMuted,
-                                                fontSize = 12.sp
-                                            )
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            IconButton(
-                                                onClick = { sizeQuantities = sizeQuantities - sz },
-                                                modifier = Modifier.size(22.dp)
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Close,
-                                                    contentDescription = "Remove size selection",
-                                                    tint = TextMuted.copy(alpha = 0.7f),
-                                                    modifier = Modifier.size(14.dp)
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                    // Stock Availability Indicator
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = if (product.availableUnits > 0) SuccessGreen.copy(alpha = 0.15f) else Color(0xFFEF4444).copy(alpha = 0.15f)
+                    ) {
+                        Text(
+                            text = if (product.availableUnits > 0) "In Stock: ${product.availableUnits}" else "Out of Stock",
+                            color = if (product.availableUnits > 0) SuccessGreen else Color(0xFFEF4444),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
                     }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-                    HorizontalDivider(color = DarkInputBorder)
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = "Description",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextWhite
-                    )
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    Text(
-                        text = product.description.ifEmpty { "Tailored with utmost precision using premium fabric to offer standard fit and all-day comfort." },
-                        fontSize = 14.sp,
-                        color = TextMuted,
-                        lineHeight = 22.sp
-                    )
                 }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text(
+                    text = product.name,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextWhite
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Price Section with Discount
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    val hasDiscount = product.finalPrice.isNotBlank() && product.finalPrice != product.price && product.finalPrice != "0"
+                    if (hasDiscount) {
+                        Text(
+                            text = "₹${product.finalPrice}",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = OrangePrimary
+                        )
+                        Text(
+                            text = "₹${product.price}",
+                            fontSize = 16.sp,
+                            color = TextMuted,
+                            textDecoration = TextDecoration.LineThrough
+                        )
+                        val discountPercent = try {
+                            val orig = product.price.toDouble()
+                            val finalP = product.finalPrice.toDouble()
+                            (((orig - finalP) / orig) * 100).toInt()
+                        } catch (e: Exception) { 0 }
+                        if (discountPercent > 0) {
+                            Surface(
+                                shape = RoundedCornerShape(4.dp),
+                                color = OrangePrimary.copy(alpha = 0.2f)
+                            ) {
+                                Text(
+                                    text = "$discountPercent% OFF",
+                                    color = OrangePrimary,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                    } else {
+                        Text(
+                            text = "₹${product.price.ifEmpty { "0" }}",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = OrangePrimary
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider(color = DarkInputBorder)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Size and Quantity Variations
+                ProductVariationsSection(
+                    product = product,
+                    sizes = sizes,
+                    selectedSize = selectedSize,
+                    onSizeSelected = { selectedSize = it },
+                    sizeQuantities = sizeQuantities,
+                    onQuantityChange = { sizeQuantities = it },
+                    unitPrice = unitPrice
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider(color = DarkInputBorder)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Description",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextWhite
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = product.description.ifEmpty { "Tailored with utmost precision using premium fabric to offer standard fit and all-day comfort." },
+                    fontSize = 14.sp,
+                    color = TextMuted,
+                    lineHeight = 22.sp
+                )
+            }
         }
 
         // Floating Top Bar: Back, Cart, Favorite
-        Row(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .fillMaxWidth()
-                .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Surface(
-                shape = CircleShape,
-                color = DarkCardSecondary.copy(alpha = 0.85f),
-                modifier = Modifier.size(40.dp).clickable { onBackClick() }
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Back",
-                        tint = TextWhite
-                    )
-                }
-            }
+        ProductHeaderBar(
+            modifier = Modifier.align(Alignment.TopCenter),
+            isFavorite = isFavorite,
+            product = product,
+            viewModel = viewModel,
+            onBackClick = onBackClick,
+            onNavigateToCart = onNavigateToCart
+        )
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Surface(
-                    shape = CircleShape,
-                    color = DarkCardSecondary.copy(alpha = 0.85f),
-                    modifier = Modifier.size(40.dp).clickable {
-                        onNavigateToCart()
-                    }
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Default.ShoppingCart,
-                            contentDescription = "Cart",
-                            tint = TextWhite
-                        )
-                    }
-                }
-
-                Surface(
-                    shape = CircleShape,
-                    color = DarkCardSecondary.copy(alpha = 0.85f),
-                    modifier = Modifier.size(40.dp).clickable {
-                        viewModel.toggleFavorite(product)
-                    }
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = "Favorite",
-                            tint = if (isFavorite) AccentCoral else TextWhite
-                        )
-                    }
-                }
-            }
-        }
-
-        val isOutOfStock = product.availableUnits <= 0
-
-        Surface(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth(),
-            color = DarkCard,
-            shadowElevation = 16.dp
-        ) {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                HorizontalDivider(color = DarkInputBorder.copy(alpha = 0.5f), thickness = 1.dp)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .navigationBarsPadding()
-                        .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = {
-                            if (isOutOfStock) {
-                                Toast.makeText(context, "This product is currently out of stock!", Toast.LENGTH_SHORT).show()
-                            } else if (totalSelectedUnits <= 0) {
-                                Toast.makeText(context, "Please select at least 1 item to add to cart!", Toast.LENGTH_SHORT).show()
-                            } else {
-                                activeSelections.forEach { (sz, qty) ->
-                                    val cartItem = CartDataModels(
-                                        productId = product.productId,
-                                        name = product.name,
-                                        image = product.image,
-                                        quantity = qty.toString(),
-                                        size = sz,
-                                        description = product.description,
-                                        category = product.category,
-                                        price = product.price,
-                                        finalPrice = product.finalPrice
-                                    )
-                                    viewModel.addToCart(cartItem)
-                                }
-                            }
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(50.dp),
-                        shape = RoundedCornerShape(10.dp),
-                        border = BorderStroke(1.dp, if (isOutOfStock || totalSelectedUnits <= 0) DarkInputBorder else OrangePrimary),
-                        colors = ButtonDefaults.outlinedButtonColors(containerColor = DarkCard)
-                    ) {
-                        Text(
-                            text = if (isOutOfStock) "Out of Stock" else "Add to Cart (${if (totalSelectedUnits > 0) totalSelectedUnits else 0})",
-                            color = if (isOutOfStock || totalSelectedUnits <= 0) TextMuted else OrangePrimary,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    Button(
-                        onClick = {
-                            if (isOutOfStock) {
-                                Toast.makeText(context, "This product is currently out of stock!", Toast.LENGTH_SHORT).show()
-                            } else if (totalSelectedUnits <= 0) {
-                                Toast.makeText(context, "Please select at least 1 item to proceed to checkout!", Toast.LENGTH_SHORT).show()
-                            } else {
-                                val userAddress = wishlistState.data // or user profile
-                                val sizesSummary = activeSelections.entries.joinToString(", ") { "${it.key}(x${it.value})" }
-                                onBuyNowClick(product.productId, totalSelectedUnits, sizesSummary)
-                            }
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(50.dp),
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isOutOfStock || totalSelectedUnits <= 0) DarkCardSecondary else OrangePrimary
-                        )
-                    ) {
-                        Text(
-                            text = if (isOutOfStock) "Unavailable" else "Buy Now (${if (totalSelectedUnits > 0) totalSelectedUnits else 0})",
-                            color = if (isOutOfStock || totalSelectedUnits <= 0) TextMuted else ButtonTextColor,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
-        }
+        // Bottom Action Bar: Add to Cart & Buy Now
+        ProductBottomBar(
+            modifier = Modifier.align(Alignment.BottomCenter),
+            product = product,
+            totalSelectedUnits = totalSelectedUnits,
+            activeSelections = activeSelections,
+            viewModel = viewModel,
+            onBuyNowClick = onBuyNowClick
+        )
     }
 }
